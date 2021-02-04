@@ -1,0 +1,17 @@
+name: protolint
+
+on:
+  pull_request:
+    branches: [ '*' ]
+
+jobs:
+  test-lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout source
+      uses: actions/checkout@v2
+
+    - name: run protolint
+      uses: plexsystems/protolint-action@v0.2.0
+      with:
+        configDirectory: extras
