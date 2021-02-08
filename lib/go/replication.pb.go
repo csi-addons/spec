@@ -7,8 +7,12 @@
 package replication
 
 import (
+	context "context"
 	proto "github.com/golang/protobuf/proto"
 	descriptor "github.com/golang/protobuf/protoc-gen-go/descriptor"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -1041,4 +1045,238 @@ func file_replication_proto_init() {
 	file_replication_proto_rawDesc = nil
 	file_replication_proto_goTypes = nil
 	file_replication_proto_depIdxs = nil
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConnInterface
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion6
+
+// ControllerClient is the client API for Controller service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type ControllerClient interface {
+	// EnableVolumeReplication RPC call to enable the volume replication.
+	EnableVolumeReplication(ctx context.Context, in *EnableVolumeReplicationRequest, opts ...grpc.CallOption) (*EnableVolumeReplicationResponse, error)
+	// DisableVolumeReplication RPC call to disable the volume replication.
+	DisableVolumeReplication(ctx context.Context, in *DisableVolumeReplicationRequest, opts ...grpc.CallOption) (*DisableVolumeReplicationResponse, error)
+	// PromoteVolume RPC call to promote the volume.
+	PromoteVolume(ctx context.Context, in *PromoteVolumeRequest, opts ...grpc.CallOption) (*PromoteVolumeResponse, error)
+	// DemoteVolume RPC call to demote the volume.
+	DemoteVolume(ctx context.Context, in *DemoteVolumeRequest, opts ...grpc.CallOption) (*DemoteVolumeResponse, error)
+	// ResyncVolume RPC call to resync the volume.
+	ResyncVolume(ctx context.Context, in *ResyncVolumeRequest, opts ...grpc.CallOption) (*ResyncVolumeResponse, error)
+}
+
+type controllerClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewControllerClient(cc grpc.ClientConnInterface) ControllerClient {
+	return &controllerClient{cc}
+}
+
+func (c *controllerClient) EnableVolumeReplication(ctx context.Context, in *EnableVolumeReplicationRequest, opts ...grpc.CallOption) (*EnableVolumeReplicationResponse, error) {
+	out := new(EnableVolumeReplicationResponse)
+	err := c.cc.Invoke(ctx, "/replication.Controller/EnableVolumeReplication", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *controllerClient) DisableVolumeReplication(ctx context.Context, in *DisableVolumeReplicationRequest, opts ...grpc.CallOption) (*DisableVolumeReplicationResponse, error) {
+	out := new(DisableVolumeReplicationResponse)
+	err := c.cc.Invoke(ctx, "/replication.Controller/DisableVolumeReplication", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *controllerClient) PromoteVolume(ctx context.Context, in *PromoteVolumeRequest, opts ...grpc.CallOption) (*PromoteVolumeResponse, error) {
+	out := new(PromoteVolumeResponse)
+	err := c.cc.Invoke(ctx, "/replication.Controller/PromoteVolume", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *controllerClient) DemoteVolume(ctx context.Context, in *DemoteVolumeRequest, opts ...grpc.CallOption) (*DemoteVolumeResponse, error) {
+	out := new(DemoteVolumeResponse)
+	err := c.cc.Invoke(ctx, "/replication.Controller/DemoteVolume", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *controllerClient) ResyncVolume(ctx context.Context, in *ResyncVolumeRequest, opts ...grpc.CallOption) (*ResyncVolumeResponse, error) {
+	out := new(ResyncVolumeResponse)
+	err := c.cc.Invoke(ctx, "/replication.Controller/ResyncVolume", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ControllerServer is the server API for Controller service.
+type ControllerServer interface {
+	// EnableVolumeReplication RPC call to enable the volume replication.
+	EnableVolumeReplication(context.Context, *EnableVolumeReplicationRequest) (*EnableVolumeReplicationResponse, error)
+	// DisableVolumeReplication RPC call to disable the volume replication.
+	DisableVolumeReplication(context.Context, *DisableVolumeReplicationRequest) (*DisableVolumeReplicationResponse, error)
+	// PromoteVolume RPC call to promote the volume.
+	PromoteVolume(context.Context, *PromoteVolumeRequest) (*PromoteVolumeResponse, error)
+	// DemoteVolume RPC call to demote the volume.
+	DemoteVolume(context.Context, *DemoteVolumeRequest) (*DemoteVolumeResponse, error)
+	// ResyncVolume RPC call to resync the volume.
+	ResyncVolume(context.Context, *ResyncVolumeRequest) (*ResyncVolumeResponse, error)
+}
+
+// UnimplementedControllerServer can be embedded to have forward compatible implementations.
+type UnimplementedControllerServer struct {
+}
+
+func (*UnimplementedControllerServer) EnableVolumeReplication(context.Context, *EnableVolumeReplicationRequest) (*EnableVolumeReplicationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EnableVolumeReplication not implemented")
+}
+func (*UnimplementedControllerServer) DisableVolumeReplication(context.Context, *DisableVolumeReplicationRequest) (*DisableVolumeReplicationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DisableVolumeReplication not implemented")
+}
+func (*UnimplementedControllerServer) PromoteVolume(context.Context, *PromoteVolumeRequest) (*PromoteVolumeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PromoteVolume not implemented")
+}
+func (*UnimplementedControllerServer) DemoteVolume(context.Context, *DemoteVolumeRequest) (*DemoteVolumeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DemoteVolume not implemented")
+}
+func (*UnimplementedControllerServer) ResyncVolume(context.Context, *ResyncVolumeRequest) (*ResyncVolumeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResyncVolume not implemented")
+}
+
+func RegisterControllerServer(s *grpc.Server, srv ControllerServer) {
+	s.RegisterService(&_Controller_serviceDesc, srv)
+}
+
+func _Controller_EnableVolumeReplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnableVolumeReplicationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerServer).EnableVolumeReplication(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/replication.Controller/EnableVolumeReplication",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerServer).EnableVolumeReplication(ctx, req.(*EnableVolumeReplicationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Controller_DisableVolumeReplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DisableVolumeReplicationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerServer).DisableVolumeReplication(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/replication.Controller/DisableVolumeReplication",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerServer).DisableVolumeReplication(ctx, req.(*DisableVolumeReplicationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Controller_PromoteVolume_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PromoteVolumeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerServer).PromoteVolume(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/replication.Controller/PromoteVolume",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerServer).PromoteVolume(ctx, req.(*PromoteVolumeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Controller_DemoteVolume_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DemoteVolumeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerServer).DemoteVolume(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/replication.Controller/DemoteVolume",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerServer).DemoteVolume(ctx, req.(*DemoteVolumeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Controller_ResyncVolume_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResyncVolumeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerServer).ResyncVolume(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/replication.Controller/ResyncVolume",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerServer).ResyncVolume(ctx, req.(*ResyncVolumeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Controller_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "replication.Controller",
+	HandlerType: (*ControllerServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "EnableVolumeReplication",
+			Handler:    _Controller_EnableVolumeReplication_Handler,
+		},
+		{
+			MethodName: "DisableVolumeReplication",
+			Handler:    _Controller_DisableVolumeReplication_Handler,
+		},
+		{
+			MethodName: "PromoteVolume",
+			Handler:    _Controller_PromoteVolume_Handler,
+		},
+		{
+			MethodName: "DemoteVolume",
+			Handler:    _Controller_DemoteVolume_Handler,
+		},
+		{
+			MethodName: "ResyncVolume",
+			Handler:    _Controller_ResyncVolume_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "replication.proto",
 }
