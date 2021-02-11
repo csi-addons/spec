@@ -9,7 +9,7 @@ option go_package = ".;replication";
 extend google.protobuf.FieldOptions {
   // Indicates that a field MAY contain information that is sensitive
   // and MUST be treated as such (e.g. not logged).
-  bool replication_secret = 1059;
+  bool replication_secret = 1099;
 }
 
 // Controller holds the RPC Methods for replication and all the methods it
