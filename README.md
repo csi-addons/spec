@@ -10,15 +10,14 @@
 | DR | Disaster Recovery. |
 | RPC | [Remote Procedure Call](https://en.wikipedia.org/wiki/Remote_procedure_call). |
 
-
 ## Objective
 
 Define a standard that will enable storage vendors (SP) to develop controllers/plugins for DR or to talk to the different CO systems.
 
-
 ### Goals in MVP
 
 The new standard will
+
 * Provide API at volume level granularity.
 * Enable SP authors to write one replication compliant plugin that “just works” across all COs that implement RPC.
 * Define API (RPCs) that enable:
@@ -26,27 +25,22 @@ The new standard will
   * Promote/Demote volume.
   * Resync volume to solve the issue before using the volume.
 
-
 ### Non-Goals in MVP
 
 * Replication at different granular levels
 * Replication of volume snapshots.
 
-
 ## Solution Overview
 
 This specification defines an interface along with the minimum operational and packaging recommendations for a storage provider (SP) to implement a Replication compatible plugin. The interface declares the RPCs that a plugin MUST expose.
-
 
 ## Architecture
 
 ![arch](images/arch.png)
 
-
 ## RPC Interface
 
 * **Controller Service**: The Controller plugin MUST implement these sets of RPCs.
-
 
 ```protobuf
 // Controller holds the RPC methods for replication and all the methods it
@@ -69,7 +63,6 @@ service Controller {
   returns (ResyncVolumeResponse) {}
 }
 ```
-
 
 ### EnableVolumeReplication
 
@@ -97,6 +90,15 @@ message EnableVolumeReplicationResponse {
 }
 ```
 
+#### Error Scheme
+
+| Condition | gRPC Code | Description | Recovery Behavior |
+|-------------------|-------------------|-------------------|-------------------|
+| Missing required field | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request. | Caller MUST fix the request by adding the missing required field before retrying. |
+| Volume does not exist | 5 NOT_FOUND | Indicates that a volume corresponding to the specified `volume_id` does not exist. | Caller MUST verify that the `volume_id` is correct and that the volume is accessible and has not been deleted before retrying with exponential back off. |
+Operation pending for volume | 10 ABORTED | Indicates that there is already an operation pending for the specified `volume_id`. In general the Cluster Orchestrator (CO) is responsible for ensuring that there is no more than one call "in-flight" per `volume_id` at a given time. However, in some circumstances, the CO MAY lose state (for example when the CO crashes and restarts), and MAY issue multiple calls simultaneously for the same `volume_id`. The Plugin, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `volume_id`, and then retry with exponential back off. |
+| Not authenticated | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication. | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown | 2 UNKNOWN | Indicates that a unknown error is generated | Caller MUST study the logs before retrying |
 
 ### DisableVolumeReplication
 
@@ -124,6 +126,15 @@ message DisableVolumeReplicationResponse {
 }
 ```
 
+#### Error Scheme
+
+| Condition | gRPC Code | Description | Recovery Behavior |
+|-------------------|-------------------|-------------------|-------------------|
+| Missing required field | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request. | Caller MUST fix the request by adding the missing required field before retrying. |
+| Volume does not exist | 5 NOT_FOUND | Indicates that a volume corresponding to the specified `volume_id` does not exist. | Caller MUST verify that the `volume_id` is correct and that the volume is accessible and has not been deleted before retrying with exponential back off. |
+Operation pending for volume | 10 ABORTED | Indicates that there is already an operation pending for the specified `volume_id`. In general the Cluster Orchestrator (CO) is responsible for ensuring that there is no more than one call "in-flight" per `volume_id` at a given time. However, in some circumstances, the CO MAY lose state (for example when the CO crashes and restarts), and MAY issue multiple calls simultaneously for the same `volume_id`. The Plugin, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `volume_id`, and then retry with exponential back off. |
+| Not authenticated | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication. | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown | 2 UNKNOWN | Indicates that a unknown error is generated | Caller MUST study the logs before retrying |
 
 ### PromoteVolume
 
@@ -154,6 +165,17 @@ message PromoteVolumeResponse{
 }
 ```
 
+#### Error Scheme
+
+| Condition | gRPC Code | Description | Recovery Behavior |
+|-------------------|-------------------|-------------------|-------------------|
+| Missing required field | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request. | Caller MUST fix the request by adding the missing required field before retrying. |
+| Volume does not exist | 5 NOT_FOUND | Indicates that a volume corresponding to the specified `volume_id` does not exist. | Caller MUST verify that the `volume_id` is correct and that the volume is accessible and has not been deleted before retrying with exponential back off. |
+| Volume is not replicated | 9 FAILED_PRECONDITION | Indicates that the volume corresponding to the specified `volume_id` could not be promoted due to failed precondition (for example mirroring is not enabled). | Caller SHOULD ensure that mirroring is enabled. |
+Operation pending for volume | 10 ABORTED | Indicates that there is already an operation pending for the specified `volume_id`. In general the Cluster Orchestrator (CO) is responsible for ensuring that there is no more than one call "in-flight" per `volume_id` at a given time. However, in some circumstances, the CO MAY lose state (for example when the CO crashes and restarts), and MAY issue multiple calls simultaneously for the same `volume_id`. The Plugin, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `volume_id`, and then retry with exponential back off. |
+| Call not implemented | 12 UNIMPLEMENTED | The invoked RPC is not implemented by the Plugin or disabled in the Plugin's current mode of operation. | Caller MUST NOT retry. |
+| Not authenticated | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication. | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown | 2 UNKNOWN | Indicates that a unknown error is generated | Caller MUST study the logs before retrying |
 
 ### DemoteVolume
 
@@ -184,6 +206,17 @@ message DemoteVolumeResponse{
 }
 ```
 
+#### Error Scheme
+
+| Condition | gRPC Code | Description | Recovery Behavior |
+|-------------------|-------------------|-------------------|-------------------|
+| Missing required field | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request. | Caller MUST fix the request by adding the missing required field before retrying. |
+| Volume does not exist | 5 NOT_FOUND | Indicates that a volume corresponding to the specified `volume_id` does not exist. | Caller MUST verify that the `volume_id` is correct and that the volume is accessible and has not been deleted before retrying with exponential back off. |
+| Volume in not replicated | 9 FAILED_PRECONDITION | Indicates that the volume corresponding to the specified `volume_id` could not be demoted due to failed precondition (for example mirroring is not enabled). | Caller SHOULD ensure that mirroring is enabled. |
+Operation pending for volume | 10 ABORTED | Indicates that there is already an operation pending for the specified `volume_id`. In general the Cluster Orchestrator (CO) is responsible for ensuring that there is no more than one call "in-flight" per `volume_id` at a given time. However, in some circumstances, the CO MAY lose state (for example when the CO crashes and restarts), and MAY issue multiple calls simultaneously for the same `volume_id`. The Plugin, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `volume_id`, and then retry with exponential back off. |
+| Call not implemented | 12 UNIMPLEMENTED | The invoked RPC is not implemented by the Plugin or disabled in the Plugin's current mode of operation. | Caller MUST NOT retry. |
+| Not authenticated | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication. | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown | 2 UNKNOWN | Indicates that a unknown error is generated | Caller MUST study the logs before retrying |
 
 ### ResyncVolume
 
@@ -216,3 +249,15 @@ message ResyncVolumeResponse{
   bool ready = 1;
 }
 ```
+
+#### Error Scheme
+
+| Condition | gRPC Code | Description | Recovery Behavior |
+|-------------------|-------------------|-------------------|-------------------|
+| Missing required field | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request. | Caller MUST fix the request by adding the missing required field before retrying. |
+| Volume does not exist | 5 NOT_FOUND | Indicates that a volume corresponding to the specified `volume_id` does not exist. | Caller MUST verify that the `volume_id` is correct and that the volume is accessible and has not been deleted before retrying with exponential back off. |
+| Volume is not replicated or image is not demoted | 9 FAILED_PRECONDITION | Indicates that the volume corresponding to the specified volume_id could not be resynced due to failed precondition (for example mirroring is not enabled or the image is not in the demoted state). | Caller SHOULD ensure that mirroring is enabled and the image is demoted. |
+Operation pending for volume | 10 ABORTED | Indicates that there is already an operation pending for the specified `volume_id`. In general the Cluster Orchestrator (CO) is responsible for ensuring that there is no more than one call "in-flight" per `volume_id` at a given time. However, in some circumstances, the CO MAY lose state (for example when the CO crashes and restarts), and MAY issue multiple calls simultaneously for the same `volume_id`. The Plugin, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `volume_id`, and then retry with exponential back off. |
+| Call not implemented | 12 UNIMPLEMENTED | The invoked RPC is not implemented by the Plugin or disabled in the Plugin's current mode of operation. | Caller MUST NOT retry. |
+| Not authenticated | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication. | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown | 2 UNKNOWN | Indicates that a unknown error is generated | Caller MUST study the logs before retrying |
