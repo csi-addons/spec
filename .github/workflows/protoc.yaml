@@ -1,0 +1,17 @@
+name: protoc
+
+on:
+  pull_request:
+    branches: [ '*' ]
+
+jobs:
+  test-protoc:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout source
+      uses: actions/checkout@v2
+
+    - name: generate go libs using protoc
+      run: |
+        make build
+        make check-changes
