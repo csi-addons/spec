@@ -1,0 +1,8 @@
+# binary dir
+bin
+
+# pkg dir
+dist
+
+# dependency dir
+google
