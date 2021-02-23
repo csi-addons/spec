@@ -18,3 +18,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # disabling go test as its auto generated code
         VALIDATE_GO: false
+        MARKDOWN_CONFIG_FILE: .markdownlint.json
