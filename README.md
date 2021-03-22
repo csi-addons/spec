@@ -81,7 +81,7 @@ message EnableVolumeReplicationRequest {
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 2;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 3 [(replication_secret) = true];
+  map<string, bytes> secrets = 3 [(replication_secret) = true];
 }
 
 // EnableVolumeReplicationResponse holds the information to send when
@@ -117,7 +117,7 @@ message DisableVolumeReplicationRequest {
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 2;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 3 [(replication_secret) = true];
+  map<string, bytes> secrets = 3 [(replication_secret) = true];
 }
 
 // DisableVolumeReplicationResponse holds the information to send when
@@ -156,7 +156,7 @@ message PromoteVolumeRequest {
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 3;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 4 [(replication_secret) = true];
+  map<string, bytes> secrets = 4 [(replication_secret) = true];
 }
 
 // PromoteVolumeResponse holds the information to send when
@@ -197,7 +197,7 @@ message DemoteVolumeRequest {
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 3;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 4 [(replication_secret) = true];
+  map<string, bytes> secrets = 4 [(replication_secret) = true];
 }
 
 // DemoteVolumeResponse holds the information to send when
@@ -237,7 +237,7 @@ message ResyncVolumeRequest {
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 3;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 4 [(replication_secret) = true];
+  map<string, bytes> secrets = 4 [(replication_secret) = true];
 }
 
 // ResyncVolumeResponse holds the information to send when
