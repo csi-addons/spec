@@ -12,14 +12,16 @@
 
 ## Objective
 
-Define a standard that will enable storage vendors (SP) to develop controllers/plugins for DR or to talk to the different CO systems.
+Define a standard that will enable storage vendors (SP) to develop
+controllers/plugins for DR or to talk to the different CO systems.
 
 ### Goals in MVP
 
 The new standard will
 
 * Provide API at volume level granularity.
-* Enable SP authors to write one replication compliant plugin that “just works” across all COs that implement RPC.
+* Enable SP authors to write one replication compliant plugin that “just works”
+  across all COs that implement RPC.
 * Define API (RPCs) that enable:
   * Enable/Disable volume replication.
   * Promote/Demote volume.
@@ -32,7 +34,10 @@ The new standard will
 
 ## Solution Overview
 
-This specification defines an interface along with the minimum operational and packaging recommendations for a storage provider (SP) to implement a Replication compatible plugin. The interface declares the RPCs that a plugin MUST expose.
+This specification defines an interface along with the minimum operational and
+packaging recommendations for a storage provider (SP) to implement a
+Replication compatible plugin. The interface declares the RPCs that a plugin
+MUST expose.
 
 ## Architecture
 
@@ -40,7 +45,8 @@ This specification defines an interface along with the minimum operational and p
 
 ## RPC Interface
 
-* **Controller Service**: The Controller plugin MUST implement these sets of RPCs.
+* **Controller Service**: The Controller plugin MUST implement these sets of
+  RPCs.
 
 ```protobuf
 // Controller holds the RPC methods for replication and all the methods it
