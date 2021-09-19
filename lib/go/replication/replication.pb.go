@@ -43,8 +43,9 @@ type EnableVolumeReplicationRequest struct {
 	VolumeId string `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
 	// The identifier for the replication.
 	// This field is OPTIONAL.
-	// This field MUST contain enough information, together with volume_id, to uniquely identify
-	// this specific replication vs all other replications supported by this plugin.
+	// This field MUST contain enough information, together with volume_id,
+	// to uniquely identify this specific replication
+	// vs all other replications supported by this plugin.
 	ReplicationId string `protobuf:"bytes,4,opt,name=replication_id,json=replicationId,proto3" json:"replication_id,omitempty"`
 	// Plugin specific parameters passed in as opaque key-value pairs.
 	Parameters map[string]string `protobuf:"bytes,2,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
@@ -169,8 +170,9 @@ type DisableVolumeReplicationRequest struct {
 	VolumeId string `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
 	// The identifier for the replication.
 	// This field is OPTIONAL.
-	// This field MUST contain enough information, together with volume_id, to uniquely identify
-	// this specific replication vs all other replications supported by this plugin.
+	// This field MUST contain enough information, together with volume_id,
+	// to uniquely identify this specific replication
+	// vs all other replications supported by this plugin.
 	ReplicationId string `protobuf:"bytes,4,opt,name=replication_id,json=replicationId,proto3" json:"replication_id,omitempty"`
 	// Plugin specific parameters passed in as opaque key-value pairs.
 	Parameters map[string]string `protobuf:"bytes,2,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
@@ -295,8 +297,9 @@ type PromoteVolumeRequest struct {
 	VolumeId string `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
 	// The identifier for the replication.
 	// This field is OPTIONAL.
-	// This field MUST contain enough information, together with volume_id, to uniquely identify
-	// this specific replication vs all other replications supported by this plugin.
+	// This field MUST contain enough information, together with volume_id,
+	// to uniquely identify this specific replication
+	// vs all other replications supported by this plugin.
 	ReplicationId string `protobuf:"bytes,5,opt,name=replication_id,json=replicationId,proto3" json:"replication_id,omitempty"`
 	// This field is optional.
 	// Default value is false, force option to Promote the volume.
@@ -431,8 +434,9 @@ type DemoteVolumeRequest struct {
 	VolumeId string `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
 	// The identifier for the replication.
 	// This field is OPTIONAL.
-	// This field MUST contain enough information, together with volume_id, to uniquely identify
-	// this specific replication vs all other replications supported by this plugin.
+	// This field MUST contain enough information, together with volume_id,
+	// to uniquely identify this specific replication
+	// vs all other replications supported by this plugin.
 	ReplicationId string `protobuf:"bytes,5,opt,name=replication_id,json=replicationId,proto3" json:"replication_id,omitempty"`
 	// This field is optional.
 	// Default value is false, force option to Demote the volume.
@@ -566,8 +570,9 @@ type ResyncVolumeRequest struct {
 	VolumeId string `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
 	// The identifier for the replication.
 	// This field is OPTIONAL.
-	// This field MUST contain enough information, together with volume_id, to uniquely identify
-	// this specific replication vs all other replications supported by this plugin.
+	// This field MUST contain enough information, together with volume_id,
+	// to uniquely identify this specific replication
+	// vs all other replications supported by this plugin.
 	ReplicationId string `protobuf:"bytes,5,opt,name=replication_id,json=replicationId,proto3" json:"replication_id,omitempty"`
 	// This field is optional.
 	// Default value is false, force option to Resync the volume.
