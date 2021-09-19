@@ -10,6 +10,11 @@ extend google.protobuf.FieldOptions {
   // Indicates that a field MAY contain information that is sensitive
   // and MUST be treated as such (e.g. not logged).
   bool replication_secret = 1099;
+
+  // Indicates that this field is OPTIONAL and part of an experimental
+  // API that may be deprecated and eventually removed between minor
+  // releases.
+  bool alpha_field = 1100;
 }
 
 // Controller holds the RPC Methods for replication and all the methods it
@@ -50,7 +55,7 @@ message EnableVolumeReplicationRequest {
   // this specific volume vs all other volumes supported by this plugin.
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
-  string target_volume_id = 4;
+  string target_volume_id = 4 [(alpha_field) = true];
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 2;
   // Secrets required by the plugin to complete the request.
@@ -80,7 +85,7 @@ message DisableVolumeReplicationRequest {
   // this specific volume vs all other volumes supported by this plugin.
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
-  string target_volume_id = 4;
+  string target_volume_id = 4 [(alpha_field) = true];
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 2;
   // Secrets required by the plugin to complete the request.
@@ -110,7 +115,7 @@ message PromoteVolumeRequest {
   // this specific volume vs all other volumes supported by this plugin.
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
-  string target_volume_id = 5;
+  string target_volume_id = 5 [(alpha_field) = true];
   // This field is optional.
   // Default value is false, force option to Promote the volume.
   bool force = 2;
@@ -143,7 +148,7 @@ message DemoteVolumeRequest {
   // this specific volume vs all other volumes supported by this plugin.
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
-  string target_volume_id = 5;
+  string target_volume_id = 5 [(alpha_field) = true];
   // This field is optional.
   // Default value is false, force option to Demote the volume.
   bool force = 2;
@@ -175,7 +180,7 @@ message ResyncVolumeRequest {
   // this specific volume vs all other volumes supported by this plugin.
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
-  string target_volume_id = 5;
+  string target_volume_id = 5 [(alpha_field) = true];
   // This field is optional.
   // Default value is false, force option to Resync the volume.
   bool force = 2;
