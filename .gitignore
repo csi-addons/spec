@@ -6,3 +6,6 @@ dist
 
 # dependency dir
 google
+
+# temporary protobuf files
+*.tmp
