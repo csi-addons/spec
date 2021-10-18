@@ -49,6 +49,24 @@ MUST expose.
   RPCs.
 
 ```protobuf
+syntax = "proto3";
+package replication;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = ".;replication";
+
+extend google.protobuf.FieldOptions {
+  // Indicates that a field MAY contain information that is sensitive
+  // and MUST be treated as such (e.g. not logged).
+  bool replication_secret = 1099;
+
+  // Indicates that this field is OPTIONAL and part of an experimental
+  // API that may be deprecated and eventually removed between minor
+  // releases.
+  bool alpha_field = 1100;
+}
+
 // Controller holds the RPC methods for replication and all the methods it
 // exposes should be idempotent.
 service Controller {
