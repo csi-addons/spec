@@ -19,7 +19,7 @@ PROTOC_GEN_GO_VERSION := 1.25.0
 PROTOC_GEN_GO_GRPC_VERSION := 1.1.0
 
 PROTOC_FOUND := $(shell ./bin/protoc --version 2> /dev/null)
-PROTOC_GEN_GO_FOUND := $(shell ./bin/protoc-gen-go --version 2> /dev/null)
+PROTOC_GEN_GO_FOUND := $(shell ./bin/protoc-gen-go --version 2>&1 | grep protoc-gen-go)
 PROTOC_GEN_GO_GRPC_FOUND := $(shell ./bin/protoc-gen-go-grpc --version 2> /dev/null)
 
 
