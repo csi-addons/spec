@@ -40,8 +40,8 @@ all: install-deps build
 
 build: install-deps
 	# generate libs
-	./bin/protoc --go_out=lib/go/replication --go_opt=paths=source_relative --plugin=./bin/protoc-gen-go replication.proto
-	./bin/protoc --go-grpc_out=lib/go/replication --go-grpc_opt=paths=source_relative --plugin=./bin/protoc-gen-go-grpc replication.proto
+	./bin/protoc --go_out=lib/go --go_opt=paths=source_relative --plugin=./bin/protoc-gen-go replication/replication.proto
+	./bin/protoc --go-grpc_out=lib/go --go-grpc_opt=paths=source_relative --plugin=./bin/protoc-gen-go-grpc replication/replication.proto
 
 install-deps:
 	mkdir -p bin dist google/protobuf
