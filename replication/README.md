@@ -102,6 +102,12 @@ message EnableVolumeReplicationRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
+  // The identifier for the replication.
+  // This field is OPTIONAL.
+  // This field MUST contain enough information, together with volume_id,
+  // to uniquely identify this specific replication
+  // vs all other replications supported by this plugin.
+  string replication_id = 4 [(alpha_field) = true];
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 2;
   // Secrets required by the plugin to complete the request.
@@ -138,6 +144,12 @@ message DisableVolumeReplicationRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
+  // The identifier for the replication.
+  // This field is OPTIONAL.
+  // This field MUST contain enough information, together with volume_id,
+  // to uniquely identify this specific replication
+  // vs all other replications supported by this plugin.
+  string replication_id = 4 [(alpha_field) = true];
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 2;
   // Secrets required by the plugin to complete the request.
@@ -174,6 +186,12 @@ message PromoteVolumeRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
+  // The identifier for the replication.
+  // This field is OPTIONAL.
+  // This field MUST contain enough information, together with volume_id,
+  // to uniquely identify this specific replication
+  // vs all other replications supported by this plugin.
+  string replication_id = 5 [(alpha_field) = true];
   // This field is optional.
   // Default value is false, force option to Promote the volume.
   bool force = 2;
@@ -215,6 +233,12 @@ message DemoteVolumeRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
+  // The identifier for the replication.
+  // This field is OPTIONAL.
+  // This field MUST contain enough information, together with volume_id,
+  // to uniquely identify this specific replication
+  // vs all other replications supported by this plugin.
+  string replication_id = 5 [(alpha_field) = true];
   // This field is optional.
   // Default value is false, force option to Demote the volume.
   bool force = 2;
@@ -255,6 +279,12 @@ message ResyncVolumeRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
+  // The identifier for the replication.
+  // This field is OPTIONAL.
+  // This field MUST contain enough information, together with volume_id,
+  // to uniquely identify this specific replication
+  // vs all other replications supported by this plugin.
+  string replication_id = 5 [(alpha_field) = true];
   // This field is optional.
   // Default value is false, force option to Resync the volume.
   bool force = 2;
