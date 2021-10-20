@@ -19,7 +19,7 @@ PROTOC_GEN_GO_VERSION := 1.25.0
 PROTOC_GEN_GO_GRPC_VERSION := 1.1.0
 
 PROTOC_FOUND := $(shell ./bin/protoc --version 2> /dev/null)
-PROTOC_GEN_GO_FOUND := $(shell ./bin/protoc-gen-go --version 2> /dev/null)
+PROTOC_GEN_GO_FOUND := $(shell ./bin/protoc-gen-go --version 2>&1 | grep protoc-gen-go)
 PROTOC_GEN_GO_GRPC_FOUND := $(shell ./bin/protoc-gen-go-grpc --version 2> /dev/null)
 
 
@@ -40,8 +40,8 @@ all: install-deps build
 
 build: install-deps
 	# generate libs
-	./bin/protoc --go_out=lib/go/replication --go_opt=paths=source_relative --plugin=./bin/protoc-gen-go replication.proto
-	./bin/protoc --go-grpc_out=lib/go/replication --go-grpc_opt=paths=source_relative --plugin=./bin/protoc-gen-go-grpc replication.proto
+	./bin/protoc --go_out=lib/go --go_opt=paths=source_relative --plugin=./bin/protoc-gen-go replication/replication.proto
+	./bin/protoc --go-grpc_out=lib/go --go-grpc_opt=paths=source_relative --plugin=./bin/protoc-gen-go-grpc replication/replication.proto
 
 install-deps:
 	mkdir -p bin dist google/protobuf
