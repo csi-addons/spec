@@ -1,6 +1,6 @@
 # Container Storage Interface Addons
 
-The CSI-Addons project hosts extentions to the [CSI specification](csi_spec)
+The CSI-Addons project hosts extensions to the [CSI specification][csi_spec]
 that provide advanced storage operations.
 
 ## Volume Replication

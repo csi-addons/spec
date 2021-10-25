@@ -41,7 +41,7 @@ MUST expose.
 
 ## Architecture
 
-![arch](images/arch.png)
+![arch](../images/arch.png)
 
 ## RPC Interface
 
