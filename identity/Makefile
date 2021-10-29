@@ -12,14 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-all:
+PROTO := identity.proto
+PROTO_SOURCE := README.md
 
-check-changes:
-	output=`git status -z *.go | tr '\0' '\n'`; if test -z "$$output"; then echo "all good"; else echo "files got changed" exit 1; fi
+all: install-deps $(PROTO) build
 
-clean-deps:
-	rm -rf bin dist google
-
-%:
-	$(MAKE) -C identity $@
-	$(MAKE) -C replication $@
+include ../release-tools/build.make

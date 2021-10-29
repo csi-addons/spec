@@ -44,8 +44,10 @@ ifndef HAVE_PROTOC
 		https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip
 	unzip -jod ../bin ../dist/protoc-${PROTOC_VERSION}-linux-x86_64.zip bin/protoc
 
-	# extract include/google/protobuf/descriptor.proto
-	unzip -jod ../google/protobuf ../dist/protoc-${PROTOC_VERSION}-linux-x86_64.zip include/google/protobuf/descriptor.proto
+	# extract descriptor.proto and wrappers.proto
+	unzip -jod ../google/protobuf ../dist/protoc-${PROTOC_VERSION}-linux-x86_64.zip \
+		include/google/protobuf/descriptor.proto \
+		include/google/protobuf/wrappers.proto
 endif
 
 ifndef HAVE_PROTOC_GEN_GO
