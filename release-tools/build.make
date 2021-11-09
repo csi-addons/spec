@@ -45,7 +45,7 @@ ifndef HAVE_PROTOC
 	unzip -jod ../bin ../dist/protoc-${PROTOC_VERSION}-linux-x86_64.zip bin/protoc
 
 	# extract include/google/protobuf/descriptor.proto
-	unzip -jod ../google/protobuf ../dist/protoc-${PROTOC_VERSION}-linux-x86_64.zip include/google/protobuf/descriptor.proto
+	unzip -jod ../google/protobuf ../dist/protoc-${PROTOC_VERSION}-linux-x86_64.zip include/google/protobuf/descriptor.proto include/google/protobuf/timestamp.proto
 endif
 
 ifndef HAVE_PROTOC_GEN_GO

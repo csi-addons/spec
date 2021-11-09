@@ -3,6 +3,7 @@ syntax = "proto3";
 package replication;
 
 import "google/protobuf/descriptor.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = ".;replication";
 
@@ -182,4 +183,7 @@ message ResyncVolumeResponse{
   // The default value is false.
   // This field is REQUIRED.
   bool ready = 1;
+  // Timestamp of last resync update on the volume.
+  // This field is optional.
+  .google.protobuf.Timestamp updated_time = 2;
 }
