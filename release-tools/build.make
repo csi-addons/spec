@@ -22,6 +22,7 @@ PROTOC_FOUND := $(shell ../bin/protoc --version 2> /dev/null)
 PROTOC_GEN_GO_FOUND := $(shell ../bin/protoc-gen-go --version 2>&1 | grep protoc-gen-go)
 PROTOC_GEN_GO_GRPC_FOUND := $(shell ../bin/protoc-gen-go-grpc --version 2> /dev/null)
 
+CSI_SPEC_VERSION := v1.5.0
 
 ifeq ("${PROTOC_FOUND}","libprotoc ${PROTOC_VERSION}")
 	HAVE_PROTOC = "yes"
@@ -37,17 +38,21 @@ endif
 
 
 install-deps:
-	mkdir -p ../bin ../dist ../google/protobuf
+	mkdir -p ../bin ../dist ../google/protobuf ../github.com/container-storage-interface/spec/lib/go/csi
 ifndef HAVE_PROTOC
 	# download protoc
 	wget -P ../dist/ --backups=1 \
 		https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip
 	unzip -jod ../bin ../dist/protoc-${PROTOC_VERSION}-linux-x86_64.zip bin/protoc
 
-	# extract descriptor.proto and wrappers.proto
+	# extract descriptor.proto, timestamp.proto and wrappers.proto
 	unzip -jod ../google/protobuf ../dist/protoc-${PROTOC_VERSION}-linux-x86_64.zip \
 		include/google/protobuf/descriptor.proto \
+		include/google/protobuf/timestamp.proto \
 		include/google/protobuf/wrappers.proto
+
+	# fetch csi.proto, place is in the right Go package dir
+	wget -O ../github.com/container-storage-interface/spec/lib/go/csi/csi.proto https://raw.githubusercontent.com/container-storage-interface/spec/${CSI_SPEC_VERSION}/csi.proto
 endif
 
 ifndef HAVE_PROTOC_GEN_GO

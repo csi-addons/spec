@@ -5,6 +5,7 @@ bin
 dist
 
 # dependency dir
+github.com
 google
 
 # temporary protobuf files
