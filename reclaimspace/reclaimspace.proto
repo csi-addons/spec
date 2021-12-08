@@ -7,12 +7,6 @@ import "google/protobuf/descriptor.proto";
 
 option go_package = "github.com/csi-addons/spec/lib/go/reclaimspace";
 
-extend google.protobuf.FieldOptions {
-  // Indicates that a field MAY contain information that is sensitive
-  // and MUST be treated as such (e.g. not logged).
-  bool reclaimspace_secret = 1099;
-}
-
 // ReclaimSpaceController holds the RPC method for running discard operations
 // on the inactive (not required to be staged/published) volume.
 service ReclaimSpaceController {
@@ -39,7 +33,7 @@ message ControllerReclaimSpaceRequest {
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 2;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 3 [(reclaimspace_secret) = true];
+  map<string, string> secrets = 3 [(csi.v1.csi_secret) = true];
 }
 
 // ControllerReclaimSpaceResponse holds the information about the result of the
@@ -97,7 +91,7 @@ message NodeReclaimSpaceRequest {
 
   // Secrets required by plugin to complete the reclaim space operation.
   // This field is OPTIONAL.
-  map<string, string> secrets = 5 [(reclaimspace_secret) = true];
+  map<string, string> secrets = 5 [(csi.v1.csi_secret) = true];
 }
 
 // NodeReclaimSpaceResponse holds the information about the result of the
