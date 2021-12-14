@@ -193,7 +193,7 @@ message Capability {
   message ReclaimSpace {
     // Type describes a CSI Service that CSI-drivers can support.
     enum Type {
-      // UNKNOWN indicates that the CSI-driver does support the ReclaimSpace
+      // UNKNOWN indicates that the CSI-driver does not support the ReclaimSpace
       // operation in the current mode. The CSI-driver may be able to support
       // the operation when is it configured differently. The CSI-Addons CO
       // plugin will most likely ignore this node for the ReclaimSpace
