@@ -13,5 +13,5 @@ jobs:
 
     - name: generate go libs using protoc
       run: |
-        make build
+        make
         make check-changes
