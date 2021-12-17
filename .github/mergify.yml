@@ -1,0 +1,68 @@
+---
+defaults:
+  actions:
+    queue:
+      name: default
+      method: rebase
+      rebase_fallback: merge
+      update_method: rebase
+
+queue_rules:
+  - name: default
+    conditions:
+      - check-success=test-lint
+      - check-success=test-protoc
+
+pull_request_rules:
+  - name: remove outdated approvals
+    conditions:
+      - base~=^(main)|(release-.+)$
+    actions:
+      dismiss_reviews:
+        approved: true
+        changes_requested: false
+
+  - name: merge after one approval (no design changes)
+    conditions:
+      - base~=^(main)|(release-.+)$
+      - label!=design
+      - "#approved-reviews-by>=1"
+      - "#changes-requested-reviews-by=0"
+      - check-success=test-lint
+      - check-success=test-protoc
+    actions:
+      queue: {}
+      dismiss_reviews: {}
+      delete_head_branch: {}
+
+  - name: design changes needs approval from at least one core maintainer
+    conditions:
+      - base~=^(main)|(release-.+)$
+      - label=design
+      - "#approved-reviews-by>=2"
+      - "#changes-requested-reviews-by=0"
+      - "approved-reviews-by=@csi-addons/maintainers"
+      - check-success=test-lint
+      - check-success=test-protoc
+    actions:
+      queue: {}
+      dismiss_reviews: {}
+      delete_head_branch: {}
+
+  - name: label design changes (update the generated Go files)
+    conditions:
+      - files~=^(lib/go/)
+    actions:
+      label:
+        add:
+          - design
+
+  - name: request reviews from reviewers for design changes
+    conditions:
+      - files~=(lib/go/)$
+      - -closed
+      - -draft
+    actions:
+      request_reviews:
+        users_from_teams:
+          - "@csi-addons/maintainers"
