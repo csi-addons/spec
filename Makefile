@@ -15,7 +15,7 @@
 all:
 
 check-changes:
-	output=`git status -z *.go | tr '\0' '\n'`; if test -z "$$output"; then echo "all good"; else echo "files got changed" exit 1; fi
+	output=`git status -z *.go | tr '\0' '\n'`; if test -z "$$output"; then echo "all good"; else echo "files got changed" ; exit 1; fi
 
 clean-deps:
 	rm -rf bin dist github.com google
