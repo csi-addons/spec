@@ -118,6 +118,27 @@ message Capability {
     Type type = 1;
   }
 
+  // NetworkFence contains the features of the NetworkFence operation that the
+  // CSI-driver supports.
+  message NetworkFence {
+    // Type describes a CSI Service that CSI-drivers can support.
+    enum Type {
+      // UNKNOWN indicates that the CSI-driver does not support the NetworkFence
+      // operation in the current mode. The CSI-Addons CO plugin will most
+      // likely ignore this node for the NetworkFence operation.
+      UNKNOWN = 0;
+
+      // NETWORK_FENCE indicates that the CSI-driver provides RPCs for a
+      // NetworkFence operation.
+      // The presence of this capability determines whether the CSI-Addons CO
+      // plugin can invoke RPCs that require access to the storage system,
+      // similar to the CSI Controller (provisioner).
+      NETWORK_FENCE = 1;
+    }
+    // type contains the Type of CSI Service that the CSI-driver supports.
+    Type type = 1;
+  }
+
   // Additional CSI-Addons operations will need to be added here.
 
   oneof type {
@@ -125,6 +146,8 @@ message Capability {
     Service service = 1;
     // ReclaimSpace operation capabilities.
     ReclaimSpace reclaim_space = 2;
+    // NetworkFence operation capabilities
+    NetworkFence network_fence = 3;
 
     // Additional CSI-Addons operations need to be appended to this list.
   }
