@@ -82,7 +82,7 @@ message FenceClusterNetworkRequest {
   map<string, string> secrets = 2 [(csi.v1.csi_secret) = true];
   // list of CIDR blocks on which the fencing operation is expected to be
   // performed.
-  repeated CIDR cidrs = 3;
+  repeated string cidrs = 3;
 }
 
 // FenceClusterNetworkResponse is returned by the CSI-driver as a result of
@@ -105,7 +105,7 @@ message UnfenceClusterNetworkRequest {
   map<string, string> secrets = 2 [(csi.v1.csi_secret) = true];
   // list of CIDR blocks on which the fencing operation is expected to be
   // performed.
-  repeated CIDR cidrs = 3;
+  repeated string cidrs = 3;
 }
 
 // UnfenceClusterNetworkResponse is returned by the CSI-driver as a result of
@@ -131,19 +131,11 @@ message ListClusterFenceRequest {
 // ListClusterFenceResponse call.
 message ListClusterFenceResponse {
   // list of IPs that are blocklisted by the SP.
-  repeated CIDR cidrs = 1;
+  repeated string cidrs = 1;
 }
 ```
 
-### CIDR blocks
-
-```protobuf
-// CIDR holds a CIDR block.
-message CIDR {
-  // CIDR block
-  string cidr = 1;
-}
-```
+```doc
 
 #### Error Scheme
 
