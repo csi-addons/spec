@@ -5,7 +5,7 @@ that provide advanced storage operations.
 
 ## Network Fencing
 
-The [Network Fencing](fencing/README.md) specification provides a
+The [Network Fencing](fence/README.md) specification provides a
 mechanism that Storage Providers can implement to network-fence any
 client using corresponding CIDR blocks.
 
