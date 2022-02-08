@@ -239,6 +239,27 @@ message Capability {
     Type type = 1;
   }
 
+  // Healer contains the features of the Healer operation that the
+  // CSI-driver supports.
+  message Healer {
+    // Type describes a CSI Service that CSI-drivers can support.
+    enum Type {
+      // UNKNOWN indicates that the CSI-driver does not support the Healer
+      // operation in the current mode. The CSI-Addons CO plugin will most
+      // likely ignore this node for the Healer operation.
+      UNKNOWN = 0;
+
+      // HEALER indicates that the CSI-driver provides RPCs for a
+      // Healer operation.
+      // The presence of this capability determines whether the CSI-Addons CO
+      // plugin can invoke RPCs that require access to the storage system,
+      // similar to the CSI Controller (provisioner).
+      HEALER = 1;
+    }
+    // type contains the Type of CSI Service that the CSI-driver supports.
+    Type type = 1;
+  }
+
   // Additional CSI-Addons operations will need to be added here.
 
   oneof type {
@@ -248,6 +269,8 @@ message Capability {
     ReclaimSpace reclaim_space = 2;
     // NetworkFence operation capabilities
     NetworkFence network_fence = 3;
+    // Healer operation capabilities
+    Healer healer = 4;
 
     // Additional CSI-Addons operations need to be appended to this list.
   }
