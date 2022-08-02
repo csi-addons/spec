@@ -139,6 +139,28 @@ message Capability {
     Type type = 1;
   }
 
+  // VolumeReplication contains the features of the volumereplication operation
+  // that the CSI-driver supports.
+  message VolumeReplication {
+    // Type describes a CSI Service that CSI-drivers can support.
+    enum Type {
+      // UNKNOWN indicates that the CSI-driver does not support the
+      // VolumeReplication operation in the current mode. The CSI-Addons CO
+      // plugin will most likely ignore this node for the
+      // VolumeReplication operation.
+      UNKNOWN = 0;
+
+      // VOLUME_REPLICATION indicates that the CSI-driver provides RPCs for a
+      // VolumeReplication operation.
+      // The presence of this capability determines whether the CSI-Addons CO
+      // plugin can invoke RPCs that require access to the storage system,
+      // similar to the CSI Controller (provisioner).
+      VOLUME_REPLICATION = 1;
+    }
+    // type contains the Type of CSI Service that the CSI-driver supports.
+    Type type = 1;
+  }
+
   // Additional CSI-Addons operations will need to be added here.
 
   oneof type {
@@ -148,6 +170,8 @@ message Capability {
     ReclaimSpace reclaim_space = 2;
     // NetworkFence operation capabilities
     NetworkFence network_fence = 3;
+    // VolumeReplication operation capabilities.
+    VolumeReplication volume_replication = 4;
 
     // Additional CSI-Addons operations need to be appended to this list.
   }
