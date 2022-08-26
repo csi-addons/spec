@@ -52,15 +52,13 @@ MUST expose.
 syntax = "proto3";
 package replication;
 
+import "github.com/container-storage-interface/spec/lib/go/csi/csi.proto";
 import "google/protobuf/descriptor.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = ".;replication";
 
 extend google.protobuf.FieldOptions {
-  // Indicates that a field MAY contain information that is sensitive
-  // and MUST be treated as such (e.g. not logged).
-  bool replication_secret = 1099;
-
   // Indicates that this field is OPTIONAL and part of an experimental
   // API that may be deprecated and eventually removed between minor
   // releases.
@@ -85,6 +83,10 @@ service Controller {
   // ResyncVolume RPC call to resync the volume.
   rpc ResyncVolume (ResyncVolumeRequest)
   returns (ResyncVolumeResponse) {}
+  // GetVolumeReplicationInfo RPC call to get the volume replication
+  // information.
+  rpc GetVolumeReplicationInfo (GetVolumeReplicationInfoRequest)
+  returns (GetVolumeReplicationInfoResponse) {}
 }
 ```
 
@@ -103,15 +105,18 @@ message EnableVolumeReplicationRequest {
   // this volume.
   string volume_id = 1;
   // The identifier for the replication.
+  // Plugin specific parameters passed in as opaque key-value pairs.
+  map<string, string> parameters = 2;
+  // Secrets required by the plugin to complete the request.
+  map<string, string> secrets = 3 [(csi.v1.csi_secret) = true];
   // This field is OPTIONAL.
   // This field MUST contain enough information, together with volume_id,
   // to uniquely identify this specific replication
   // vs all other replications supported by this plugin.
   string replication_id = 4 [(alpha_field) = true];
-  // Plugin specific parameters passed in as opaque key-value pairs.
-  map<string, string> parameters = 2;
-  // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 3 [(replication_secret) = true];
+  // If specified, this field will contain volume or volume group id
+  // for replication.
+  ReplicationSource replication_source = 5;
 }
 
 // EnableVolumeReplicationResponse holds the information to send when
@@ -144,16 +149,19 @@ message DisableVolumeReplicationRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
+  // Plugin specific parameters passed in as opaque key-value pairs.
+  map<string, string> parameters = 2;
+  // Secrets required by the plugin to complete the request.
+  map<string, string> secrets = 3 [(csi.v1.csi_secret) = true];
   // The identifier for the replication.
   // This field is OPTIONAL.
   // This field MUST contain enough information, together with volume_id,
   // to uniquely identify this specific replication
   // vs all other replications supported by this plugin.
   string replication_id = 4 [(alpha_field) = true];
-  // Plugin specific parameters passed in as opaque key-value pairs.
-  map<string, string> parameters = 2;
-  // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 3 [(replication_secret) = true];
+  // If specified, this field will contain volume or volume group id
+  // for replication.
+  ReplicationSource replication_source = 5;
 }
 
 // DisableVolumeReplicationResponse holds the information to send when
@@ -186,19 +194,22 @@ message PromoteVolumeRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
-  // The identifier for the replication.
-  // This field is OPTIONAL.
-  // This field MUST contain enough information, together with volume_id,
-  // to uniquely identify this specific replication
-  // vs all other replications supported by this plugin.
-  string replication_id = 5 [(alpha_field) = true];
   // This field is optional.
   // Default value is false, force option to Promote the volume.
   bool force = 2;
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 3;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 4 [(replication_secret) = true];
+  map<string, string> secrets = 4 [(csi.v1.csi_secret) = true];
+  // The identifier for the replication.
+  // This field is OPTIONAL.
+  // This field MUST contain enough information, together with volume_id,
+  // to uniquely identify this specific replication
+  // vs all other replications supported by this plugin.
+  string replication_id = 5 [(alpha_field) = true];
+  // If specified, this field will contain volume or volume group id
+  // for replication.
+  ReplicationSource replication_source = 6;
 }
 
 // PromoteVolumeResponse holds the information to send when
@@ -233,19 +244,22 @@ message DemoteVolumeRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
-  // The identifier for the replication.
-  // This field is OPTIONAL.
-  // This field MUST contain enough information, together with volume_id,
-  // to uniquely identify this specific replication
-  // vs all other replications supported by this plugin.
-  string replication_id = 5 [(alpha_field) = true];
   // This field is optional.
   // Default value is false, force option to Demote the volume.
   bool force = 2;
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 3;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 4 [(replication_secret) = true];
+  map<string, string> secrets = 4 [(csi.v1.csi_secret) = true];
+  // The identifier for the replication.
+  // This field is OPTIONAL.
+  // This field MUST contain enough information, together with volume_id,
+  // to uniquely identify this specific replication
+  // vs all other replications supported by this plugin.
+  string replication_id = 5 [(alpha_field) = true];
+  // If specified, this field will contain volume or volume group id
+  // for replication.
+  ReplicationSource replication_source = 6;
 }
 
 // DemoteVolumeResponse holds the information to send when
@@ -279,19 +293,22 @@ message ResyncVolumeRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
-  // The identifier for the replication.
-  // This field is OPTIONAL.
-  // This field MUST contain enough information, together with volume_id,
-  // to uniquely identify this specific replication
-  // vs all other replications supported by this plugin.
-  string replication_id = 5 [(alpha_field) = true];
   // This field is optional.
   // Default value is false, force option to Resync the volume.
   bool force = 2;
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 3;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 4 [(replication_secret) = true];
+  map<string, string> secrets = 4 [(csi.v1.csi_secret) = true];
+  // The identifier for the replication.
+  // This field is OPTIONAL.
+  // This field MUST contain enough information, together with volume_id,
+  // to uniquely identify this specific replication
+  // vs all other replications supported by this plugin.
+  string replication_id = 5 [(alpha_field) = true];
+  // If specified, this field will contain volume or volume group id
+  // for replication.
+  ReplicationSource replication_source = 6;
 }
 
 // ResyncVolumeResponse holds the information to send when
@@ -315,3 +332,78 @@ message ResyncVolumeResponse{
 | Call not implemented                             | 12 UNIMPLEMENTED      | The invoked RPC is not implemented by the Plugin or disabled in the Plugin's current mode of operation.                                                                                                                                                                                                                                                                                                                                                                                                                                   | Caller MUST NOT retry.                                                                                                                                                                                                                |
 | Not authenticated                                | 16 UNAUTHENTICATED    | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
 | Error is Unknown                                 | 2 UNKNOWN             | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST study the logs before retrying                                                                                                                                                                                            |
+
+### GetVolumeReplicationInfo
+
+```protobuf
+// GetVolumeReplicationInfoRequest holds the required information to get
+// the Volume replication information.
+message GetVolumeReplicationInfoRequest {
+  // The identifier for this volume, generated by the plugin during
+  // CreateVolume CSI RPC call.
+  // This field is REQUIRED.
+  // This field MUST contain enough information to uniquely identify
+  // this specific volume vs all other volumes supported by this plugin.
+  // This field SHALL be used by the CO in subsequent calls to refer to
+  // this volume.
+  string volume_id = 1;
+  // Secrets required by the plugin to complete the request.
+  map<string, string> secrets = 2 [(csi.v1.csi_secret) = true];
+  // The identifier for the replication.
+  // This field is OPTIONAL.
+  // This field MUST contain enough information, together with volume_id,
+  // to uniquely identify this specific replication
+  // vs all other replications supported by this plugin.
+  string replication_id = 3 [(alpha_field) = true];
+  // If specified, this field will contain volume or volume group id
+  // for replication.
+  ReplicationSource replication_source = 4;
+}
+
+// GetVolumeReplicationInfoResponse holds the information to send the
+// volume replication information.
+message GetVolumeReplicationInfoResponse {
+  // Holds the last sync time.
+  // This field is REQUIRED.
+  .google.protobuf.Timestamp last_sync_time = 1;
+}
+```
+
+#### Error Scheme
+
+| Condition                                        | gRPC Code             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Recovery Behavior                                                                                                                                                                                                                     |
+| ------------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Missing required field                           | 3 INVALID_ARGUMENT    | Indicates that a required field is missing from the request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                     |
+| Volume does not exist or volume replication details not found                           | 5 NOT_FOUND           | Indicates that a volume corresponding to the specified `volume_id` does not exist or replication details are not avaiable at the moment.                                                                                                                                                                                                                                                                                                                                                                                                                            | Caller MUST verify that the `volume_id` is correct and that the volume is accessible and has not been deleted before retrying with exponential back off.                                                                              |
+| Volume is not replicated or image is not promoted | 9 FAILED_PRECONDITION | Indicates that the volume information corresponding to the specified volume_id could not retrived due to failed precondition (for example replication is not enabled or the image is not in the primary state).                                                                                                                                                                                                                                                                                                                                    | Caller SHOULD ensure that replication is enabled and the image is promoted.                                                                                                                                                            |
+| Operation pending for volume                     | 10 ABORTED            | Indicates that there is already an operation pending for the specified `volume_id`. In general the Cluster Orchestrator (CO) is responsible for ensuring that there is no more than one call "in-flight" per `volume_id` at a given time. However, in some circumstances, the CO MAY lose state (for example when the CO crashes and restarts), and MAY issue multiple calls simultaneously for the same `volume_id`. The Plugin, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `volume_id`, and then retry with exponential back off.                                                                                                   |
+| Call not implemented                             | 12 UNIMPLEMENTED      | The invoked RPC is not implemented by the Plugin or disabled in the Plugin's current mode of operation.                                                                                                                                                                                                                                                                                                                                                                                                                                   | Caller MUST NOT retry.                                                                                                                                                                                                                |
+| Not authenticated                                | 16 UNAUTHENTICATED    | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown                                 | 2 UNKNOWN             | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST study the logs before retrying                                                                                                                                                                                            |
+
+### ReplicationSource
+
+```protobuf
+// Specifies what source the replication will be created from. One of the
+// type fields MUST be specified.
+message ReplicationSource {
+  message VolumeSource {
+    // Contains identity information for the existing volume.
+    // This field is REQUIRED.
+    string volume_id = 1;
+  }
+
+  message VolumeGroupSource {
+    // Contains identity information for the existing volume group.
+    // This field is REQUIRED.
+    string volume_group_id = 1;
+  }
+
+  oneof type {
+    // Volume source type
+    VolumeSource volume = 1;
+    // Volume group source type
+    VolumeGroupSource volumegroup = 2;
+  }
+}
+```
