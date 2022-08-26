@@ -52,15 +52,12 @@ MUST expose.
 syntax = "proto3";
 package replication;
 
+import "github.com/container-storage-interface/spec/lib/go/csi/csi.proto";
 import "google/protobuf/descriptor.proto";
 
 option go_package = ".;replication";
 
 extend google.protobuf.FieldOptions {
-  // Indicates that a field MAY contain information that is sensitive
-  // and MUST be treated as such (e.g. not logged).
-  bool replication_secret = 1099;
-
   // Indicates that this field is OPTIONAL and part of an experimental
   // API that may be deprecated and eventually removed between minor
   // releases.
@@ -111,7 +108,7 @@ message EnableVolumeReplicationRequest {
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 2;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 3 [(replication_secret) = true];
+  map<string, string> secrets = 3 [(csi.v1.csi_secret) = true];
 }
 
 // EnableVolumeReplicationResponse holds the information to send when
@@ -153,7 +150,7 @@ message DisableVolumeReplicationRequest {
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 2;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 3 [(replication_secret) = true];
+  map<string, string> secrets = 3 [(csi.v1.csi_secret) = true];
 }
 
 // DisableVolumeReplicationResponse holds the information to send when
@@ -198,7 +195,7 @@ message PromoteVolumeRequest {
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 3;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 4 [(replication_secret) = true];
+  map<string, string> secrets = 4 [(csi.v1.csi_secret) = true];
 }
 
 // PromoteVolumeResponse holds the information to send when
@@ -245,7 +242,7 @@ message DemoteVolumeRequest {
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 3;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 4 [(replication_secret) = true];
+  map<string, string> secrets = 4 [(csi.v1.csi_secret) = true];
 }
 
 // DemoteVolumeResponse holds the information to send when
@@ -291,7 +288,7 @@ message ResyncVolumeRequest {
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 3;
   // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 4 [(replication_secret) = true];
+  map<string, string> secrets = 4 [(csi.v1.csi_secret) = true];
 }
 
 // ResyncVolumeResponse holds the information to send when
