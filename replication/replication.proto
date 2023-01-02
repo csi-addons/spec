@@ -235,12 +235,14 @@ message GetVolumeReplicationInfoResponse {
 // Specifies what source the replication will be created from. One of the
 // type fields MUST be specified.
 message ReplicationSource {
+  // Message containing volume id
   message VolumeSource {
     // Contains identity information for the existing volume.
     // This field is REQUIRED.
     string replication_volume_id = 1;
   }
 
+  // Message containing volume group id
   message VolumeGroupSource {
     // Contains identity information for the existing volume group.
     // This field is REQUIRED.
@@ -248,7 +250,9 @@ message ReplicationSource {
   }
 
   oneof type {
+    // Volume group source type
     VolumeGroupSource volumegroup = 1;
+    // Volume source type
     VolumeSource volume = 2;
   }
 }
