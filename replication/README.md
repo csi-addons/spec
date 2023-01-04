@@ -104,6 +104,9 @@ message EnableVolumeReplicationRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
+  // If specified, this field will contain volume or volume group id
+  // for replication. This field is OPTIONAL.
+  ReplicationSource replication_source = 5;
   // The identifier for the replication.
   // This field is OPTIONAL.
   // This field MUST contain enough information, together with volume_id,
@@ -146,6 +149,9 @@ message DisableVolumeReplicationRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
+  // If specified, this field will contain volume or volume group id
+  // for replication. This field is OPTIONAL.
+  ReplicationSource replication_source = 5;
   // The identifier for the replication.
   // This field is OPTIONAL.
   // This field MUST contain enough information, together with volume_id,
@@ -188,6 +194,9 @@ message PromoteVolumeRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
+  // If specified, this field will contain volume or volume group id
+  // for replication. This field is OPTIONAL.
+  ReplicationSource replication_source = 6;
   // The identifier for the replication.
   // This field is OPTIONAL.
   // This field MUST contain enough information, together with volume_id,
@@ -235,6 +244,9 @@ message DemoteVolumeRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
+  // If specified, this field will contain volume or volume group id
+  // for replication. This field is OPTIONAL.
+  ReplicationSource replication_source = 6;
   // The identifier for the replication.
   // This field is OPTIONAL.
   // This field MUST contain enough information, together with volume_id,
@@ -281,6 +293,9 @@ message ResyncVolumeRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
+  // If specified, this field will contain volume or volume group id
+  // for replication. This field is OPTIONAL.
+  ReplicationSource replication_source = 6;
   // The identifier for the replication.
   // This field is OPTIONAL.
   // This field MUST contain enough information, together with volume_id,
@@ -332,6 +347,9 @@ message GetVolumeReplicationInfoRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
+  // If specified, this field will contain volume or volume group id
+  // for replication. This field is OPTIONAL.
+  ReplicationSource replication_source = 4;
   // Secrets required by the plugin to complete the request.
   map<string, string> secrets = 2 [(csi.v1.csi_secret) = true];
   // The identifier for the replication.
@@ -362,3 +380,32 @@ message GetVolumeReplicationInfoResponse {
 | Call not implemented                             | 12 UNIMPLEMENTED      | The invoked RPC is not implemented by the Plugin or disabled in the Plugin's current mode of operation.                                                                                                                                                                                                                                                                                                                                                                                                                                   | Caller MUST NOT retry.                                                                                                                                                                                                                |
 | Not authenticated                                | 16 UNAUTHENTICATED    | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
 | Error is Unknown                                 | 2 UNKNOWN             | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST study the logs before retrying                                                                                                                                                                                            |
+
+### ReplicationSource
+
+```protobuf
+// Specifies what source the replication will be created from. One of the
+// type fields MUST be specified.
+message ReplicationSource {
+  // Message containing volume id
+  message VolumeSource {
+    // Contains identity information for the existing volume.
+    // This field is REQUIRED.
+    string replication_volume_id = 1;
+  }
+
+  // Message containing volume group id
+  message VolumeGroupSource {
+    // Contains identity information for the existing volume group.
+    // This field is REQUIRED.
+    string replication_volume_group_id = 1;
+  }
+
+  oneof type {
+    // Volume group source type
+    VolumeGroupSource volumegroup = 1;
+    // Volume source type
+    VolumeSource volume = 2;
+  }
+}
+```
