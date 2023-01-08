@@ -104,19 +104,19 @@ message EnableVolumeReplicationRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
-  // If specified, this field will contain volume or volume group id
-  // for replication. This field is OPTIONAL.
-  ReplicationSource replication_source = 5;
   // The identifier for the replication.
+  // Plugin specific parameters passed in as opaque key-value pairs.
+  map<string, string> parameters = 2;
+  // Secrets required by the plugin to complete the request.
+  map<string, string> secrets = 3 [(csi.v1.csi_secret) = true];
   // This field is OPTIONAL.
   // This field MUST contain enough information, together with volume_id,
   // to uniquely identify this specific replication
   // vs all other replications supported by this plugin.
   string replication_id = 4 [(alpha_field) = true];
-  // Plugin specific parameters passed in as opaque key-value pairs.
-  map<string, string> parameters = 2;
-  // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 3 [(csi.v1.csi_secret) = true];
+  // If specified, this field will contain volume or volume group id
+  // for replication.
+  ReplicationSource replication_source = 5;
 }
 
 // EnableVolumeReplicationResponse holds the information to send when
@@ -149,19 +149,19 @@ message DisableVolumeReplicationRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
-  // If specified, this field will contain volume or volume group id
-  // for replication. This field is OPTIONAL.
-  ReplicationSource replication_source = 5;
+  // Plugin specific parameters passed in as opaque key-value pairs.
+  map<string, string> parameters = 2;
+  // Secrets required by the plugin to complete the request.
+  map<string, string> secrets = 3 [(csi.v1.csi_secret) = true];
   // The identifier for the replication.
   // This field is OPTIONAL.
   // This field MUST contain enough information, together with volume_id,
   // to uniquely identify this specific replication
   // vs all other replications supported by this plugin.
   string replication_id = 4 [(alpha_field) = true];
-  // Plugin specific parameters passed in as opaque key-value pairs.
-  map<string, string> parameters = 2;
-  // Secrets required by the plugin to complete the request.
-  map<string, string> secrets = 3 [(csi.v1.csi_secret) = true];
+  // If specified, this field will contain volume or volume group id
+  // for replication.
+  ReplicationSource replication_source = 5;
 }
 
 // DisableVolumeReplicationResponse holds the information to send when
@@ -194,15 +194,6 @@ message PromoteVolumeRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
-  // If specified, this field will contain volume or volume group id
-  // for replication. This field is OPTIONAL.
-  ReplicationSource replication_source = 6;
-  // The identifier for the replication.
-  // This field is OPTIONAL.
-  // This field MUST contain enough information, together with volume_id,
-  // to uniquely identify this specific replication
-  // vs all other replications supported by this plugin.
-  string replication_id = 5 [(alpha_field) = true];
   // This field is optional.
   // Default value is false, force option to Promote the volume.
   bool force = 2;
@@ -210,6 +201,15 @@ message PromoteVolumeRequest {
   map<string, string> parameters = 3;
   // Secrets required by the plugin to complete the request.
   map<string, string> secrets = 4 [(csi.v1.csi_secret) = true];
+  // The identifier for the replication.
+  // This field is OPTIONAL.
+  // This field MUST contain enough information, together with volume_id,
+  // to uniquely identify this specific replication
+  // vs all other replications supported by this plugin.
+  string replication_id = 5 [(alpha_field) = true];
+  // If specified, this field will contain volume or volume group id
+  // for replication.
+  ReplicationSource replication_source = 6;
 }
 
 // PromoteVolumeResponse holds the information to send when
@@ -244,15 +244,6 @@ message DemoteVolumeRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
-  // If specified, this field will contain volume or volume group id
-  // for replication. This field is OPTIONAL.
-  ReplicationSource replication_source = 6;
-  // The identifier for the replication.
-  // This field is OPTIONAL.
-  // This field MUST contain enough information, together with volume_id,
-  // to uniquely identify this specific replication
-  // vs all other replications supported by this plugin.
-  string replication_id = 5 [(alpha_field) = true];
   // This field is optional.
   // Default value is false, force option to Demote the volume.
   bool force = 2;
@@ -260,6 +251,15 @@ message DemoteVolumeRequest {
   map<string, string> parameters = 3;
   // Secrets required by the plugin to complete the request.
   map<string, string> secrets = 4 [(csi.v1.csi_secret) = true];
+  // The identifier for the replication.
+  // This field is OPTIONAL.
+  // This field MUST contain enough information, together with volume_id,
+  // to uniquely identify this specific replication
+  // vs all other replications supported by this plugin.
+  string replication_id = 5 [(alpha_field) = true];
+  // If specified, this field will contain volume or volume group id
+  // for replication.
+  ReplicationSource replication_source = 6;
 }
 
 // DemoteVolumeResponse holds the information to send when
@@ -293,15 +293,6 @@ message ResyncVolumeRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
-  // If specified, this field will contain volume or volume group id
-  // for replication. This field is OPTIONAL.
-  ReplicationSource replication_source = 6;
-  // The identifier for the replication.
-  // This field is OPTIONAL.
-  // This field MUST contain enough information, together with volume_id,
-  // to uniquely identify this specific replication
-  // vs all other replications supported by this plugin.
-  string replication_id = 5 [(alpha_field) = true];
   // This field is optional.
   // Default value is false, force option to Resync the volume.
   bool force = 2;
@@ -309,6 +300,15 @@ message ResyncVolumeRequest {
   map<string, string> parameters = 3;
   // Secrets required by the plugin to complete the request.
   map<string, string> secrets = 4 [(csi.v1.csi_secret) = true];
+  // The identifier for the replication.
+  // This field is OPTIONAL.
+  // This field MUST contain enough information, together with volume_id,
+  // to uniquely identify this specific replication
+  // vs all other replications supported by this plugin.
+  string replication_id = 5 [(alpha_field) = true];
+  // If specified, this field will contain volume or volume group id
+  // for replication.
+  ReplicationSource replication_source = 6;
 }
 
 // ResyncVolumeResponse holds the information to send when
@@ -347,9 +347,6 @@ message GetVolumeReplicationInfoRequest {
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
   string volume_id = 1;
-  // If specified, this field will contain volume or volume group id
-  // for replication. This field is OPTIONAL.
-  ReplicationSource replication_source = 4;
   // Secrets required by the plugin to complete the request.
   map<string, string> secrets = 2 [(csi.v1.csi_secret) = true];
   // The identifier for the replication.
@@ -358,6 +355,9 @@ message GetVolumeReplicationInfoRequest {
   // to uniquely identify this specific replication
   // vs all other replications supported by this plugin.
   string replication_id = 3 [(alpha_field) = true];
+  // If specified, this field will contain volume or volume group id
+  // for replication.
+  ReplicationSource replication_source = 4;
 }
 
 // GetVolumeReplicationInfoResponse holds the information to send the
@@ -387,18 +387,16 @@ message GetVolumeReplicationInfoResponse {
 // Specifies what source the replication will be created from. One of the
 // type fields MUST be specified.
 message ReplicationSource {
-  // Message containing volume id
   message VolumeSource {
     // Contains identity information for the existing volume.
     // This field is REQUIRED.
-    string replication_volume_id = 1;
+    string volume_id = 1;
   }
 
-  // Message containing volume group id
   message VolumeGroupSource {
     // Contains identity information for the existing volume group.
     // This field is REQUIRED.
-    string replication_volume_group_id = 1;
+    string volume_group_id = 1;
   }
 
   oneof type {
