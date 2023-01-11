@@ -400,10 +400,10 @@ message ReplicationSource {
   }
 
   oneof type {
-    // Volume group source type
-    VolumeGroupSource volumegroup = 1;
     // Volume source type
-    VolumeSource volume = 2;
+    VolumeSource volume = 1;
+    // Volume group source type
+    VolumeGroupSource volumegroup = 2;
   }
 }
 ```
