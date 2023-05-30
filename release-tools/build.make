@@ -49,6 +49,7 @@ ifndef HAVE_PROTOC
 	unzip -jod ../google/protobuf ../dist/protoc-${PROTOC_VERSION}-linux-x86_64.zip \
 		include/google/protobuf/descriptor.proto \
 		include/google/protobuf/timestamp.proto \
+		include/google/protobuf/duration.proto \
 		include/google/protobuf/wrappers.proto
 
 	# fetch csi.proto, place is in the right Go package dir

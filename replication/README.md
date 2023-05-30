@@ -54,6 +54,7 @@ package replication;
 
 import "github.com/container-storage-interface/spec/lib/go/csi/csi.proto";
 import "google/protobuf/descriptor.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = ".;replication";
@@ -366,6 +367,17 @@ message GetVolumeReplicationInfoResponse {
   // Holds the last sync time.
   // This field is REQUIRED.
   .google.protobuf.Timestamp last_sync_time = 1;
+  // Holds the last sync duration.
+  // last_sync_duration states the time taken to sync
+  // to execute the last sync operation.
+  // This field is OPTIONAL.
+  .google.protobuf.Duration last_sync_duration = 2;
+  // Holds the last sync bytes.
+  // Represents number of bytes transferred
+  // with the last synchronization.
+  // This field is OPTIONAL.
+  // The value of this field MUST NOT be negative.
+  int64 last_sync_bytes = 3;
 }
 ```
 
