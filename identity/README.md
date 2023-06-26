@@ -23,10 +23,10 @@ operations.
 
 The API will
 
-* make it possible for worker nodes (CSI NodePlugin) to announce themselves
-* have the CSI-Addons plugin for the CO list all announced CSI-Addons capable
+- make it possible for worker nodes (CSI NodePlugin) to announce themselves
+- have the CSI-Addons plugin for the CO list all announced CSI-Addons capable
   CSI-drivers
-* provide details about CSI-Addons features the CSI-driver supports
+- provide details about CSI-Addons features the CSI-driver supports
 
 ### Non-Goals in MVP
 
@@ -261,6 +261,45 @@ message Capability {
     Type type = 1;
   }
 
+  // VolumeGroup contains the features of the volumegroup operation
+  // that the CSI-driver supports.
+  message VolumeGroup {
+    // Type describes a CSI Service that CSI-drivers can support.
+    enum Type {
+      // UNKNOWN indicates that the CSI-driver does not support the
+      // VolumeGroup operation in the current mode. The CSI-Addons CO
+      // plugin will most likely ignore this node for the
+      // VolumeGroup operation.
+      UNKNOWN = 0;
+
+      // VOLUME_GROUP indicates that the CSI-driver provides RPCs for a
+      // VolumeGroup operation.
+      // The presence of this capability determines whether the CSI-Addons CO
+      // plugin can invoke RPCs that require access to the storage system,
+      // similar to the CSI Controller (provisioner).
+      VOLUME_GROUP = 1;
+      // LIMIT_VOLUME_TO_ONE_VOLUME_GROUP indicates that the CSI-driver
+      // does not support that one volume will be in multiple VGs,
+      // so it can be in only one VG.
+      LIMIT_VOLUME_TO_ONE_VOLUME_GROUP = 2;
+      // DO_NOT_ALLOW_VG_TO_DELETE_VOLUMES indicates that the CSI-driver
+      // does not support that deletion of the VG
+      // won't delete the volumes under it.
+      DO_NOT_ALLOW_VG_TO_DELETE_VOLUMES = 3;
+      // MODIFY_VOLUME_GROUP indicates that the CSI-driver
+      // supports that modifying the VG.
+      MODIFY_VOLUME_GROUP = 4;
+      // GET_VOLUME_GROUP indicates that the CSI-driver
+      // supports getting the VG.
+      GET_VOLUME_GROUP = 5;
+      // LIST_VOLUME_GROUPS indicates that the CSI-driver
+      // supports listing the VGs.
+      LIST_VOLUME_GROUPS = 6;
+    }
+    // type contains the Type of CSI Service that the CSI-driver supports.
+    Type type = 1;
+  }
+
   // Additional CSI-Addons operations will need to be added here.
 
   oneof type {
@@ -272,6 +311,8 @@ message Capability {
     NetworkFence network_fence = 3;
     // VolumeReplication operation capabilities.
     VolumeReplication volume_replication = 4;
+    // VolumeGroup operation capabilities.
+    VolumeGroup volume_group = 5;
 
     // Additional CSI-Addons operations need to be appended to this list.
   }
@@ -291,8 +332,8 @@ response, a CSI-Addons CO plugin MAY take action with the intent to bring the
 CSI-driver to a healthy state. Such actions MAY include, but SHALL NOT be
 limited to, the following:
 
-* Restarting the CSI-driver container, or
-* Notifying the CSI-driver supervisor.
+- Restarting the CSI-driver container, or
+- Notifying the CSI-driver supervisor.
 
 The CSI-driver MAY verify that it has the right configurations, devices,
 dependencies and drivers in order to run and return a success if the validation
@@ -350,9 +391,9 @@ specified gRPC error code.
 The CSI-Addons CO plugin MAY implement the specified error recovery behavior
 when it encounters the gRPC error code.
 
-| Condition | gRPC Code | Description | Recovery Behavior |
-|-----------|-----------|-------------|-------------------|
-| CSI-driver not healthy | 9 FAILED_PRECONDITION | Indicates that the CSI-driver is not in a healthy/ready state. | Caller SHOULD assume the CSI-driver is not healthy and that future RPCs MAY fail because of this condition. |
-| Missing required dependency | 9 FAILED_PRECONDITION | Indicates that the CSI-driver is missing one or more required dependency. | Caller MUST assume the CSI-driver is not healthy. |
+| Condition                   | gRPC Code             | Description                                                               | Recovery Behavior                                                                                           |
+| --------------------------- | --------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| CSI-driver not healthy      | 9 FAILED_PRECONDITION | Indicates that the CSI-driver is not in a healthy/ready state.            | Caller SHOULD assume the CSI-driver is not healthy and that future RPCs MAY fail because of this condition. |
+| Missing required dependency | 9 FAILED_PRECONDITION | Indicates that the CSI-driver is missing one or more required dependency. | Caller MUST assume the CSI-driver is not healthy.                                                           |
 
 [csi_spec]: https://github.com/container-storage-interface/spec/blob/master/spec.md
