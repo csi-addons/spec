@@ -7,15 +7,15 @@ on:
 jobs:
   test-lint:
     runs-on: ubuntu-latest
+
     steps:
     - name: checkout source
       uses: actions/checkout@v2
 
     - name: Lint Code Base
-      uses: github/super-linter@v4
+      uses: github/super-linter@v5
       env:
         LINTER_RULES_PATH: extras
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # disabling go test as its auto generated code
         VALIDATE_GO: false
         # disabling linting process of the natural language
