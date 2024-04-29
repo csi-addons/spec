@@ -4,6 +4,8 @@ on:
   pull_request:
     branches: [ '*' ]
 
+permissions: read-all
+
 jobs:
   test-protoc:
     runs-on: ubuntu-latest
