@@ -300,6 +300,26 @@ message Capability {
     Type type = 1;
   }
 
+  // EncryptionKeyRotation contains the features of the EncryptionKeyRotation
+  // operation that the CSI driver supports.
+  message EncryptionKeyRotation {
+    // Type describes a CSI Encryption Service that CSI driver can support.
+    enum Type {
+      // UNKNOWN indicates that the CSI driver does not support the
+      // EncryptionKeyRotation operation in the current mode.
+      // The CSI-Addons CO plugin will most likely ignore this node
+      // for the EncryptionKeyRotation operation.
+      UNKNOWN = 0;
+      // ENCRYPTIONKEYROTATION indicates that the CSI driver provides
+      // RPCs for an EncryptionKeyRotation operation.
+      // The presence of this capability determines whether the CSI-Addons CO
+      // plugin can invoke RPCs for rotating the encryption key.
+      ENCRYPTIONKEYROTATION = 1;
+    }
+    // type contains the Type of CSI Service that the CSI driver supports.
+    Type type = 1;
+  }
+
   // Additional CSI-Addons operations will need to be added here.
 
   oneof type {
@@ -313,6 +333,8 @@ message Capability {
     VolumeReplication volume_replication = 4;
     // VolumeGroup operation capabilities.
     VolumeGroup volume_group = 5;
+    // EncryptionKeyRotation operation capabilities.
+    EncryptionKeyRotation encryption_key_rotation = 6;
 
     // Additional CSI-Addons operations need to be appended to this list.
   }
