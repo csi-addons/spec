@@ -14,9 +14,9 @@
 
 SHELL:=/bin/bash
 
-PROTOC_VERSION := 3.14.0
-PROTOC_GEN_GO_VERSION := 1.25.0
-PROTOC_GEN_GO_GRPC_VERSION := 1.1.0
+PROTOC_VERSION := 3.20.2
+PROTOC_GEN_GO_VERSION := 1.28.1
+PROTOC_GEN_GO_GRPC_VERSION := 1.3.0
 
 PROTOC_FOUND := $(shell ../bin/protoc --version 2> /dev/null)
 PROTOC_GEN_GO_FOUND := $(shell ../bin/protoc-gen-go --version 2>&1 | grep protoc-gen-go)
@@ -42,11 +42,11 @@ install-deps:
 ifndef HAVE_PROTOC
 	# download protoc
 	wget -P ../dist/ --backups=1 \
-		https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip
-	unzip -jod ../bin ../dist/protoc-${PROTOC_VERSION}-linux-x86_64.zip bin/protoc
+		https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-${OS}-${ARCH}.zip
+	unzip -jod ../bin ../dist/protoc-${PROTOC_VERSION}-${OS}-${ARCH}.zip bin/protoc
 
 	# extract descriptor.proto, timestamp.proto and wrappers.proto
-	unzip -jod ../google/protobuf ../dist/protoc-${PROTOC_VERSION}-linux-x86_64.zip \
+	unzip -jod ../google/protobuf ../dist/protoc-${PROTOC_VERSION}-${OS}-${ARCH}.zip \
 		include/google/protobuf/descriptor.proto \
 		include/google/protobuf/timestamp.proto \
 		include/google/protobuf/duration.proto \
@@ -59,17 +59,18 @@ endif
 ifndef HAVE_PROTOC_GEN_GO
 	# download protoc-gen-go
 	wget -P ../dist/ --backups=1 \
-		https://github.com/protocolbuffers/protobuf-go/releases/download/v${PROTOC_GEN_GO_VERSION}/protoc-gen-go.v${PROTOC_GEN_GO_VERSION}.linux.386.tar.gz
-	tar -C ../bin -zxvf ../dist/protoc-gen-go.v${PROTOC_GEN_GO_VERSION}.linux.386.tar.gz protoc-gen-go
+		https://github.com/protocolbuffers/protobuf-go/releases/download/v${PROTOC_GEN_GO_VERSION}/protoc-gen-go.v${PROTOC_GEN_GO_VERSION}.${GOOS}.${GOARCH}.tar.gz
+	tar -C ../bin -zxvf ../dist/protoc-gen-go.v${PROTOC_GEN_GO_VERSION}.${GOOS}.${GOARCH}.tar.gz protoc-gen-go
 endif
 
 ifndef HAVE_PROTOC_GEN_GO_GRPC
 	# download protoc-gen-go-grpc
 	wget -P ../dist/ --backups=1 \
-		https://github.com/grpc/grpc-go/releases/download/cmd%2Fprotoc-gen-go-grpc%2Fv${PROTOC_GEN_GO_GRPC_VERSION}/protoc-gen-go-grpc.v${PROTOC_GEN_GO_GRPC_VERSION}.linux.386.tar.gz
-	tar -C ../bin -zxvf ../dist/protoc-gen-go-grpc.v${PROTOC_GEN_GO_GRPC_VERSION}.linux.386.tar.gz ./protoc-gen-go-grpc
+		https://github.com/grpc/grpc-go/releases/download/cmd%2Fprotoc-gen-go-grpc%2Fv${PROTOC_GEN_GO_GRPC_VERSION}/protoc-gen-go-grpc.v${PROTOC_GEN_GO_GRPC_VERSION}.${GOOS}.${GOARCH}.tar.gz
+	tar -C ../bin -zxvf ../dist/protoc-gen-go-grpc.v${PROTOC_GEN_GO_GRPC_VERSION}.${GOOS}.${GOARCH}.tar.gz ./protoc-gen-go-grpc
 endif
 
+include ../release-tools/os_detect.make
 
 build: OPERATION = $(shell basename $(PROTO) .proto)
 build: install-deps
