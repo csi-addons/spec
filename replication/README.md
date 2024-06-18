@@ -104,7 +104,9 @@ message EnableVolumeReplicationRequest {
   // this specific volume vs all other volumes supported by this plugin.
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
-  string volume_id = 1;
+  // This field is deprecated. Please use "replication_source" to
+  // specify the replication source.
+  string volume_id = 1 [deprecated = true];
   // The identifier for the replication.
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 2;
@@ -149,7 +151,9 @@ message DisableVolumeReplicationRequest {
   // this specific volume vs all other volumes supported by this plugin.
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
-  string volume_id = 1;
+  // This field is deprecated. Please use "replication_source" to
+  // specify the replication source.
+  string volume_id = 1 [deprecated = true];
   // Plugin specific parameters passed in as opaque key-value pairs.
   map<string, string> parameters = 2;
   // Secrets required by the plugin to complete the request.
@@ -194,7 +198,9 @@ message PromoteVolumeRequest {
   // this specific volume vs all other volumes supported by this plugin.
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
-  string volume_id = 1;
+  // This field is deprecated. Please use "replication_source" to
+  // specify the replication source.
+  string volume_id = 1 [deprecated = true];
   // This field is optional.
   // Default value is false, force option to Promote the volume.
   bool force = 2;
@@ -244,7 +250,9 @@ message DemoteVolumeRequest {
   // this specific volume vs all other volumes supported by this plugin.
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
-  string volume_id = 1;
+  // This field is deprecated. Please use "replication_source" to
+  // specify the replication source.
+  string volume_id = 1 [deprecated = true];
   // This field is optional.
   // Default value is false, force option to Demote the volume.
   bool force = 2;
@@ -293,7 +301,9 @@ message ResyncVolumeRequest {
   // this specific volume vs all other volumes supported by this plugin.
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
-  string volume_id = 1;
+  // This field is deprecated. Please use "replication_source" to
+  // specify the replication source.
+  string volume_id = 1 [deprecated = true];
   // This field is optional.
   // Default value is false, force option to Resync the volume.
   bool force = 2;
@@ -347,7 +357,9 @@ message GetVolumeReplicationInfoRequest {
   // this specific volume vs all other volumes supported by this plugin.
   // This field SHALL be used by the CO in subsequent calls to refer to
   // this volume.
-  string volume_id = 1;
+  // This field is deprecated. Please use "replication_source" to
+  // specify the replication source.
+  string volume_id = 1 [deprecated = true];
   // Secrets required by the plugin to complete the request.
   map<string, string> secrets = 2 [(csi.v1.csi_secret) = true];
   // The identifier for the replication.
