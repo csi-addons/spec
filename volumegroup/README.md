@@ -47,19 +47,16 @@ If a volume group corresponding to the specified volume group name already exist
 parameters in the CreateVolumeGroupRequest, the Plugin MUST reply 0 OK with the corresponding CreateVolumeGroupResponse.
 CSI Plugins MAY create the following types of volume groups:
 
-Create a new empty volume group. Note that N volumes with some backend label Y could be considered to be in "group Y"
+Create a new empty volume group or a group with specific volumes. Note that N volumes with some backend label Y could be considered to be in "group Y"
 which might not be a physical group on the storage backend. In this case, an empty group can still be created by the CO
-to hold volumes. After the empty group is created, create a new volume, specifying the group name in the volume.
+to hold volumes. After the empty group is created, create a new volume. CO may call ModifyVolumeGroupMembership to add new volumes to the group.
 
 At restore time, create a single volume from individual snapshot and then join an existing group. Create an empty group.
-Create a volume from snapshot, specifying the group name in the volume.
+Create a volume from snapshot.
 
 Future goals:
 Create a new volume group from a source group snapshot. Create a new volume group from a source group. Create a new
 volume group and add a list of existing volumes to the group.
-
-Non goal:
-Create a new group and at the same time create a list of new volumes in the group.
 
 ```protobuf
 // CreateVolumeGroupRequest holds the required information to
@@ -69,7 +66,7 @@ message CreateVolumeGroupRequest {
   // This field is REQUIRED.
   string name = 1;
 
-  // params passed from VolumeGroupClass
+  // params passed to the plugin to create the volume group.
   // This field is OPTIONAL.
   map<string, string> parameters = 2;
 
@@ -78,6 +75,10 @@ message CreateVolumeGroupRequest {
   // This field is OPTIONAL. Refer to the `Secrets Requirements`
   // section on how to use this field.
   map<string, string> secrets = 3 [(csi.v1.csi_secret) = true];
+
+  // Specify volume_ids that will be added to the volume group.
+  // This field is OPTIONAL.
+  repeated string volume_ids = 4;
 }
 // CreateVolumeGroupResponse holds the information to send when
 // volumeGroup is successfully created.
@@ -119,6 +120,7 @@ CO MUST implement the specified error recovery behavior when it encounters the g
 | ----------------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | Not supported                                   | 3 INVALID_ARGUMENT | Indicates that a new volume group can not be provisioned with the specified parameters because it is not supported. More human-readable information SHOULD be provided in the gRPC `status.message` field. | Caller MUST use different parameters.                                    |
 | Volume group already exists but is incompatible | 6 ALREADY_EXISTS   | Indicates that a volume group corresponding to the specified volume group `name` already exists but is incompatible with the specified `parameters`.                                                       | Caller MUST fix the arguments or use a different `name` before retrying. |
+| Volumes cannot be grouped together | 7 FAILED_PRECONDITION   | Indicates that a volumes cannot be grouped together because volumes are not configured properly based on requirements from the SP.                                                       | Caller MUST fix the configuration of the volumes so that they meet the requirements for grouping before retrying. |
 
 #### `DeleteVolumeGroup`
 
