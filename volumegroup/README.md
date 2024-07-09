@@ -40,7 +40,7 @@ service Controller {
 
 #### `CreateVolumeGroup`
 
-A Controller Plugin MUST implement this RPC call if it has `CREATE_DELETE_VOLUME_GROUP` controller capability.
+A Controller Plugin MUST implement this RPC call if it has `VOLUME_GROUP` controller capability.
 
 This RPC will be called by the CO to create a new volume group on behalf of a user. This operation MUST be idempotent.
 If a volume group corresponding to the specified volume group name already exists, is compatible with the specified
@@ -124,7 +124,7 @@ CO MUST implement the specified error recovery behavior when it encounters the g
 
 #### `DeleteVolumeGroup`
 
-A Controller Plugin MUST implement this RPC call if it has `CREATE_DELETE_VOLUME_GROUP` capability.
+A Controller Plugin MUST implement this RPC call if it has `VOLUME_GROUP` capability.
 
 This RPC will be called by the CO to delete a volume group on behalf of a user. This operation MUST be idempotent.
 
