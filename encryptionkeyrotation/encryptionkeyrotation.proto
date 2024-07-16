@@ -37,6 +37,11 @@ message EncryptionKeyRotateRequest {
 
   // Secrets required by the plugin to complete the request.
   map<string, string> secrets = 5 [(csi.v1.csi_secret) = true];
+
+  // Volume capability describing how the CO intends to use this volume.
+  // This allows SP to determine if volume is being used as a block
+  // device or mounted file system. This is OPTIONAL.
+  csi.v1.VolumeCapability volume_capability = 6;
 }
 // EncryptionKeyRotateResponse holds the information about the result of the
 // EncryptionKeyRotateRequest call.
