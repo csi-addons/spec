@@ -21,7 +21,7 @@ service Controller {
   // ListVolumeGroups RPC call to list volume groups.
   rpc ListVolumeGroups(ListVolumeGroupsRequest)
       returns (ListVolumeGroupsResponse) {}
-  // CreateVolumeGroup RPC call to get a volume group.
+  // ControllerGetVolumeGroup RPC call to get a volume group.
   rpc ControllerGetVolumeGroup(ControllerGetVolumeGroupRequest)
       returns (ControllerGetVolumeGroupResponse) {}
 }
