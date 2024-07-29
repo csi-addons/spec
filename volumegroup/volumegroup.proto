@@ -112,6 +112,11 @@ message ModifyVolumeGroupMembershipRequest {
   // This field is OPTIONAL. Refer to the `Secrets Requirements`
   // section on how to use this field.
   map<string, string> secrets = 3 [(csi.v1.csi_secret) = true];
+
+  // parameters passed to the plugin to modify the volume group
+  // or to modify the volumes in the group.
+  // This field is OPTIONAL.
+  map<string, string> parameters = 4;
 }
 // ModifyVolumeGroupMembershipResponse holds the information to
 // send when volumeGroup is successfully modified.
