@@ -134,6 +134,13 @@ message Capability {
       // plugin can invoke RPCs that require access to the storage system,
       // similar to the CSI Controller (provisioner).
       NETWORK_FENCE = 1;
+
+      // GET_CLIENTS_TO_FENCE indicates that the CSI-driver provides RPCs for a
+      // GET_CLIENTS_TO_FENCE operation to get the clients to fence.
+      // The presence of this capability determines whether the CSI-Addons CO
+      // plugin can invoke RPCs that require access to the storage system,
+      // similar to the CSI Controller (provisioner).
+      GET_CLIENTS_TO_FENCE = 2;
     }
     // type contains the Type of CSI Service that the CSI-driver supports.
     Type type = 1;
