@@ -66,6 +66,11 @@ service FenceController {
   // ListClusterFence RPC call to provide a list of blocklisted/fenced clients.
   rpc ListClusterFence(ListClusterFenceRequest)
   returns (ListClusterFenceResponse){}
+
+  // GetFenceClients RPC calls to get the client information to use in a
+  // FenceClusterNetwork or UnfenceClusterNetwork RPC.
+  rpc GetFenceClients(GetFenceClientsRequest)
+  returns (GetFenceClientsResponse){}
 }
 ```
 
@@ -142,6 +147,40 @@ message ListClusterFenceResponse {
 message CIDR {
   // CIDR block
   string cidr = 1;
+}
+```
+
+### GetFenceClients
+
+```protobuf
+// GetFenceClientsRequest contains the necessary information to identify
+// the clients that need fencing.
+message GetFenceClientsRequest {
+  // Plugin-specific parameters passed in as opaque key-value pairs.
+  map<string, string> parameters = 1;
+  // Secrets required by the plugin to complete the request.
+  map<string, string> secrets = 2 [(csi.v1.csi_secret) = true];
+}
+
+// GetFenceClientsResponse holds the information about clients that require
+// fencing.
+message GetFenceClientsResponse {
+  // List of clients that need to be fenced.
+  repeated ClientDetails clients = 1;
+}
+```
+
+### ClientDetails
+
+```protobuf
+// ClientDetails holds the information about the client that requires fencing.
+message ClientDetails {
+  // id represents the unique identifier of the client.
+  // Required field.
+  string id = 1;
+  // list of IP addresses that represent the client's local addresses.
+  // Required field.
+  repeated CIDR addresses = 2;
 }
 ```
 
