@@ -163,6 +163,13 @@ message Capability {
       // plugin can invoke RPCs that require access to the storage system,
       // similar to the CSI Controller (provisioner).
       VOLUME_REPLICATION = 1;
+
+      // GET_REPLICATION_DESTINATION_INFO indicates that the CSI-driver
+      // supports getting the destination volume or volume group details
+      // for a replication relationship. This capability is relevant for
+      // storage providers where source and destination volume or volume
+      // group identifiers differ.
+      GET_REPLICATION_DESTINATION_INFO = 2;
     }
     // type contains the Type of CSI Service that the CSI-driver supports.
     Type type = 1;

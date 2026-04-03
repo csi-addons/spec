@@ -88,6 +88,10 @@ service Controller {
   // information.
   rpc GetVolumeReplicationInfo (GetVolumeReplicationInfoRequest)
   returns (GetVolumeReplicationInfoResponse) {}
+  // GetReplicationDestinationInfo RPC call to get the destination
+  // volume or volume group details for an existing replication.
+  rpc GetReplicationDestinationInfo (GetReplicationDestinationInfoRequest)
+  returns (GetReplicationDestinationInfoResponse) {}
 }
 ```
 
@@ -405,7 +409,7 @@ message GetVolumeReplicationInfoResponse {
     // and it may require user intervention.
     ERROR = 3;
   }
-  // Represents the current replication status as reported by 
+  // Represents the current replication status as reported by
   // the backend storage system.
   // This field is REQUIRED.
   Status status = 4;
@@ -427,6 +431,82 @@ message GetVolumeReplicationInfoResponse {
 | Call not implemented                             | 12 UNIMPLEMENTED      | The invoked RPC is not implemented by the Plugin or disabled in the Plugin's current mode of operation.                                                                                                                                                                                                                                                                                                                                                                                                                                   | Caller MUST NOT retry.                                                                                                                                                                                                                |
 | Not authenticated                                | 16 UNAUTHENTICATED    | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
 | Error is Unknown                                 | 2 UNKNOWN             | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST study the logs before retrying                                                                                                                                                                                            |
+
+### GetReplicationDestinationInfo
+
+```protobuf
+// GetReplicationDestinationInfoRequest holds the required information to
+// get the destination volume or volume group details for an existing
+// replication.
+message GetReplicationDestinationInfoRequest {
+  // Secrets required by the plugin to complete the request.
+  map<string, string> secrets = 1 [(csi.v1.csi_secret) = true];
+  // The source volume or volume group for which destination
+  // details are requested.
+  // This field is REQUIRED.
+  ReplicationSource replication_source = 2;
+}
+
+// GetReplicationDestinationInfoResponse holds the destination volume
+// or volume group details for an existing replication.
+message GetReplicationDestinationInfoResponse {
+  // The destination details for the replication.
+  // This field is REQUIRED.
+  ReplicationDestination replication_destination = 1;
+}
+
+// Specifies the destination details for a replication. One of the
+// type fields MUST be specified.
+message ReplicationDestination {
+  // VolumeDestination contains the destination details for a
+  // replicated volume.
+  message VolumeDestination {
+    // The destination volume ID on the remote/target cluster.
+    // This field is REQUIRED.
+    string volume_id = 1;
+  }
+  // VolumeGroupDestination contains the destination details for a
+  // replicated volume group.
+  message VolumeGroupDestination {
+    // The destination volume group ID on the remote/target cluster.
+    // This field is REQUIRED.
+    string volume_group_id = 1;
+    // Mapping of source volume IDs to their corresponding
+    // destination volume IDs. Key is source volume_id,
+    // value is destination volume_id.
+    // This field is OPTIONAL.
+    // This map reflects the current group membership at the
+    // time of the call, accounting for dynamic group changes.
+    // When provided, this map MUST be complete — it MUST
+    // contain an entry for every volume currently in the group.
+    // If the SP cannot determine the destination ID for all
+    // volumes (e.g., newly added volumes have not finished
+    // initial sync), the SP MUST return an error instead of
+    // a partial map.
+    map<string, string> volume_ids = 2;
+  }
+
+  oneof type {
+    // Volume destination type
+    VolumeDestination volume = 1;
+    // Volume group destination type
+    VolumeGroupDestination volumegroup = 2;
+  }
+}
+```
+
+#### Error Scheme
+
+| Condition                                | gRPC Code             | Description                                                                        | Recovery Behavior                                                                                                     |
+| ---------------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Missing required field                   | 3 INVALID_ARGUMENT    | A required field is missing from the request.                                      | Caller MUST fix the request by adding the missing required field before retrying.                                     |
+| Replication Source does not exist        | 5 NOT_FOUND           | The specified source does not exist.                                               | Caller MUST verify that the `replication_source` is correct and accessible before retrying with exponential back off. |
+| Replication Source is not replicated     | 9 FAILED_PRECONDITION | Destination information could not be retrieved because replication is not enabled. | Caller SHOULD ensure that replication is enabled on the `replication_source`.                                         |
+| Destination info not yet available       | 14 UNAVAILABLE        | Destination details are not yet available. The SP needs time after replication.    | Caller SHOULD retry with exponential back off. This is transient and resolves once replication is fully established.  |
+| Operation pending for Replication Source | 10 ABORTED            | There is already an operation pending for the specified `replication_source`.      | Caller SHOULD ensure no other calls are pending for the `replication_source`, then retry with exponential back off.   |
+| Call not implemented                     | 12 UNIMPLEMENTED      | The invoked RPC is not implemented by the Plugin.                                  | Caller MUST NOT retry.                                                                                                |
+| Not authenticated                        | 16 UNAUTHENTICATED    | The invoked RPC does not carry valid secrets for authentication.                   | Caller SHALL fix or regenerate the secrets, then retry.                                                               |
+| Error is Unknown                         | 2 UNKNOWN             | An unknown error occurred.                                                         | Caller MUST study the logs before retrying.                                                                           |
 
 ### ReplicationSource
 
