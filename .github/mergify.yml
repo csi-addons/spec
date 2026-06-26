@@ -3,12 +3,11 @@ defaults:
   actions:
     queue:
       name: default
-      method: rebase
-      update_method: rebase
 
 queue_rules:
   - name: default
-    conditions:
+    merge_method: rebase
+    merge_conditions:
       - check-success=test-lint
       - check-success=test-protoc
 
@@ -32,7 +31,6 @@ pull_request_rules:
     actions:
       queue: {}
       dismiss_reviews: {}
-      delete_head_branch: {}
 
   - name: design changes needs approval from at least one core maintainer
     conditions:
@@ -46,7 +44,6 @@ pull_request_rules:
     actions:
       queue: {}
       dismiss_reviews: {}
-      delete_head_branch: {}
 
   - name: label design changes (update the generated Go files)
     conditions:
