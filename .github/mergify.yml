@@ -3,8 +3,6 @@ defaults:
   actions:
     queue:
       name: default
-      method: rebase
-      update_method: rebase
 
 queue_rules:
   - name: default
