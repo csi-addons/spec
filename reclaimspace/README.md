@@ -1,5 +1,11 @@
 # CSI-Addons Operation: ReclaimSpace
 
+## Notational Conventions
+
+The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+"SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" are to be
+interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
+
 ## Terminology
 
 | Term     | Definition                                                                            |
@@ -35,6 +41,42 @@ packaging recommendations for a storage provider (SP) to implement a space
 reclaim operation for volumes. The interface declares the RPCs that a plugin
 MUST expose.
 
+## Architecture
+
+A user instructs the CSI-Addons CO plugin to reclaim unused space from a volume.
+The CO plugin inspects the capabilities advertised by the CSI-driver (see the
+[Identity](../identity/README.md) `ReclaimSpace` capability) and translates the
+request into a gRPC call that is relayed to the CSI-driver. The operation runs
+either on the CSI Controller (`OFFLINE`, via `ControllerReclaimSpace`) or on the
+CSI NodePlugin (`ONLINE`, via `NodeReclaimSpace`).
+
+## Error Handling
+
+All RPCs defined in this specification return a standard
+[gRPC status](https://github.com/grpc/grpc/blob/master/src/proto/grpc/status/status.proto).
+The status `code` MUST be a
+[canonical gRPC error code](https://github.com/grpc/grpc-go/blob/master/codes/codes.go);
+the CO MUST handle all valid error codes. When the `code` is not `OK`, the status
+`message` MUST contain a human-readable description of the error, which MAY be
+surfaced by the CO to end users. The status `details` MUST be empty.
+
+Each RPC below documents, in its Errors table, the gRPC codes the CSI-driver
+returns for the listed conditions and the recovery behavior the caller is
+expected to implement.
+
+The following error codes are common to all RPCs in this specification. In
+addition to the conditions below, each RPC MAY define further codes in its own
+Errors section.
+
+| Condition | gRPC Code | Description | Recovery Behavior |
+| --------- | --------- | ----------- | ----------------- |
+| Missing required field | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request. | Caller MUST fix the request by adding the missing required field before retrying. |
+| Invalid or unsupported field in the request | 3 INVALID_ARGUMENT | Indicates that one or more fields in the request is either not allowed by the CSI-driver or has an invalid value. | Caller MUST fix the field before retrying. |
+| Operation pending | 10 ABORTED | Indicates that there is already an operation pending for the specified resource. The CSI-driver SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified resource, and then retry with exponential back off. |
+| Call not implemented | 12 UNIMPLEMENTED | The invoked RPC is not implemented by the CSI-driver or disabled in its current mode of operation. | Caller MUST NOT retry. |
+| Not authenticated | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication. | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they pass authentication by the CSI-driver for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown | 2 UNKNOWN | Indicates that an unknown error occurred. | Caller MUST study the logs before retrying. |
+
 ## RPC Interface
 
 * **Controller Service**: The Controller plugin MAY implement this RPC.
@@ -68,6 +110,17 @@ service ReclaimSpaceNode {
 ```
 
 ### ControllerReclaimSpace
+
+A Controller Plugin MUST implement this RPC call if it has the `ReclaimSpace`
+`OFFLINE` capability (see the [Identity](../identity/README.md) service). This
+RPC is called by the CSI-Addons CO plugin to free unused storage allocations of
+a volume that does not need to be staged/published on a node. This operation
+MUST be idempotent. On success the CSI-driver replies `0 OK`. The amount of space
+actually reclaimed is storage-specific and MAY be zero; the optional `pre_usage`
+and `post_usage` allow the CO to observe the effect. Because reclaiming space does
+not change the logical content of the volume, reclaiming a volume that has no
+unused space to free MUST still succeed. If the operation fails, or the CO does
+not know whether it succeeded, it MAY call `ControllerReclaimSpace` again.
 
 ```protobuf
 // ControllerReclaimSpaceRequest contains the information needed to identify
@@ -105,16 +158,29 @@ message StorageConsumption {
 
 #### ControllerReclaimSpace Errors
 
+If the CSI-driver is unable to complete the ControllerReclaimSpace call
+successfully, it MUST return a non-ok gRPC code in the gRPC status. If the
+conditions defined below are encountered, the CSI-driver MUST return the
+specified gRPC error code. The caller MUST implement the specified error
+recovery behavior when it encounters the gRPC error code.
+
 | Condition                    | gRPC Code          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Recovery Behavior                                                                                                                                                                                                                     |
 | ---------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Missing required field       | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                     |
 | Volume does not exist        | 5 NOT_FOUND        | Indicates that a volume corresponding to the specified `volume_id` does not exist.                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Caller MUST verify that the `volume_id` is correct and that the volume is accessible and has not been deleted before retrying with exponential back off.                                                                              |
-| Operation pending for volume | 10 ABORTED         | Indicates that there is already an operation pending for the specified `volume_id`. In general the CSI-Addons CO plugin is responsible for ensuring that there is no more than one call "in-flight" per `volume_id` at a given time. However, in some circumstances, the CSI-Addons CO plugin MAY lose state (for example when the it crashes and restarts), and MAY issue multiple calls simultaneously for the same `volume_id`. The CSI-driver, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `volume_id`, and then retry with exponential back off.                                                                                                   |
 | Operation not supported      | 12 UNIMPLEMENTED   | Indicates that the operation is not supported. The filesystem may not support fstrim, or the block-device may lack support for DISCARD operations.                                                                                                                                                                                                                                                                                                                                                                                                         | Caller MUST NOT retry the request as the underlying storage does not support space reclamation.                                                                                                                                       |
-| Not authenticated            | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown             | 2 UNKNOWN          | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Caller MUST study the logs before retrying                                                                                                                                                                                            |
 
 ### NodeReclaimSpace
+
+A Node Plugin MUST implement this RPC call if it has the `ReclaimSpace` `ONLINE`
+capability (see the [Identity](../identity/README.md) service). This RPC is
+called by the CSI-Addons CO plugin on the node where the volume is
+staged/published, to free unused storage allocations of the active volume using
+the `volume_path` at which the volume is available. This operation MUST be
+idempotent. On success the CSI-driver replies `0 OK`. The amount of space actually
+reclaimed is storage-specific and MAY be zero; the optional `pre_usage` and
+`post_usage` allow the CO to observe the effect. Reclaiming a volume that has no
+unused space to free MUST still succeed. If the operation fails, or the CO does
+not know whether it succeeded, it MAY call `NodeReclaimSpace` again.
 
 ```protobuf
 // NodeReclaimSpaceRequest contains the information needed to identify the
@@ -172,11 +238,13 @@ message NodeReclaimSpaceResponse {
 
 #### NodeReclaimSpace Errors
 
+If the CSI-driver is unable to complete the NodeReclaimSpace call successfully,
+it MUST return a non-ok gRPC code in the gRPC status. If the conditions defined
+below are encountered, the CSI-driver MUST return the specified gRPC error code.
+The caller MUST implement the specified error recovery behavior when it
+encounters the gRPC error code.
+
 | Condition                    | gRPC Code          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Recovery Behavior                                                                                                                                                                                                                     |
 | ---------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Missing required field       | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                     |
 | Volume does not exist        | 5 NOT_FOUND        | Indicates that a volume corresponding to the specified `volume_id` does not exist.                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Caller MUST verify that the `volume_id` is correct and that the volume is accessible and has not been deleted before retrying with exponential back off.                                                                              |
-| Operation pending for volume | 10 ABORTED         | Indicates that there is already an operation pending for the specified `volume_id`. In general the CSI-Addons CO plugin is responsible for ensuring that there is no more than one call "in-flight" per `volume_id` at a given time. However, in some circumstances, the CSI-Addons CO plugin MAY lose state (for example when the it crashes and restarts), and MAY issue multiple calls simultaneously for the same `volume_id`. The CSI-driver, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `volume_id`, and then retry with exponential back off.                                                                                                   |
 | Operation not supported      | 12 UNIMPLEMENTED   | Indicates that the operation is not supported. The filesystem may not support fstrim, or the block-device may lack support for DISCARD operations.                                                                                                                                                                                                                                                                                                                                                                                                         | Caller MUST NOT retry the request as the underlying storage does not support space reclamation.                                                                                                                                       |
-| Not authenticated            | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown             | 2 UNKNOWN          | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Caller MUST study the logs before retrying                                                                                                                                                                                            |
