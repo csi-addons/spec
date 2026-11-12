@@ -1,4 +1,10 @@
-# CSI Addons Operation: EncryptionKeyRotation
+# CSI-Addons Operation: EncryptionKeyRotation
+
+## Notational Conventions
+
+The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+"SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" are to be
+interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
 
 ## Terminology
 
@@ -15,24 +21,60 @@ Define an extension to the CSI specification that will enable storage vendors
 (SP) to develop controllers/plugins that can rotate the Key Encryption Keys (KEK)
 of existing volumes that are encrypted.
 
-### Goals in MVP
+### Supported Features
 
-The new extension will define a procedure that
+This extension defines a procedure that
 
 - can be called for existing encrypted volumes
 - functions for Block and filesystem access mode volumes
 - interacts with the NodePlugin
-- makes it possible for the SP to rotate encrpytion keys on volumes
+- makes it possible for the SP to rotate encryption keys on volumes
 
-### Non-Goals in MVP
+### Unsupported Features
 
-- Rotating encrpytion keys for inactive volumes
+- Rotating encryption keys for inactive volumes
 
 ## Solution Overview
 
 This specification defines an interface along with the minimum operational and
 packaging recommendations for a storage provider (SP) to implement a key rotate operation for volumes. The interface declares the RPCs that a plugin
 MUST expose.
+
+## Architecture
+
+A user instructs the CSI-Addons CO plugin to rotate the encryption key of a
+volume. The CO plugin inspects the capabilities advertised by the CSI-driver
+(see the [Identity](../identity/README.md) `EncryptionKeyRotation` capability)
+and translates the request into a gRPC call that is relayed to the CSI-driver.
+The operation MAY be served by either the CSI ControllerPlugin or the CSI
+NodePlugin.
+
+## Error Handling
+
+All RPCs defined in this specification return a standard
+[gRPC status](https://github.com/grpc/grpc/blob/master/src/proto/grpc/status/status.proto).
+The status `code` MUST be a
+[canonical gRPC error code](https://github.com/grpc/grpc-go/blob/master/codes/codes.go);
+the CO MUST handle all valid error codes. When the `code` is not `OK`, the status
+`message` MUST contain a human-readable description of the error, which MAY be
+surfaced by the CO to end users. The status `details` MUST be empty.
+
+Each RPC below documents, in its Errors table, the gRPC codes the CSI-driver
+returns for the listed conditions and the recovery behavior the caller is
+expected to implement.
+
+The following error codes are common to all RPCs in this specification. In
+addition to the conditions below, each RPC MAY define further codes in its own
+Errors section.
+
+| Condition | gRPC Code | Description | Recovery Behavior |
+| --------- | --------- | ----------- | ----------------- |
+| Missing required field | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request. | Caller MUST fix the request by adding the missing required field before retrying. |
+| Invalid or unsupported field in the request | 3 INVALID_ARGUMENT | Indicates that one or more fields in the request is either not allowed by the CSI-driver or has an invalid value. | Caller MUST fix the field before retrying. |
+| Operation pending | 10 ABORTED | Indicates that there is already an operation pending for the specified resource. The CSI-driver SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified resource, and then retry with exponential back off. |
+| Call not implemented | 12 UNIMPLEMENTED | The invoked RPC is not implemented by the CSI-driver or disabled in its current mode of operation. | Caller MUST NOT retry. |
+| Not authenticated | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication. | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they pass authentication by the CSI-driver for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown | 2 UNKNOWN | Indicates that an unknown error occurred. | Caller MUST study the logs before retrying. |
 
 ## RPC Interface
 
@@ -56,6 +98,23 @@ service EncryptionKeyRotationController {
   returns (EncryptionKeyRotateResponse){}
 }
 ```
+
+### EncryptionKeyRotate
+
+Either a Controller Plugin or a Node Plugin MUST implement this RPC call if it
+has the `EncryptionKeyRotation` capability (see the
+[Identity](../identity/README.md) service). This RPC is called by the CSI-Addons
+CO plugin to rotate the Key Encryption Key (KEK) of an existing encrypted volume.
+If the operation fails, or the CO does not know whether it succeeded, it MAY call
+`EncryptionKeyRotate` again; the SP SHOULD handle such retries gracefully and
+MUST NOT leave the volume inaccessible.
+
+On success the CSI-driver replies `0 OK`, indicating the volume's Key Encryption
+Key (KEK) has been replaced while the volume's data remains intact and
+accessible. The RPC MAY be served by the CSI ControllerPlugin or the CSI
+NodePlugin; when served on the node, the optional `volume_path` identifies where
+the volume is available. A CSI-driver that does not support key rotation in its
+current mode MUST return `UNIMPLEMENTED` so that the CO does not retry.
 
 ### EncryptionKeyRotateRequest
 
@@ -100,12 +159,14 @@ message EncryptionKeyRotateResponse {
 }
 ```
 
-### Error Schemes
+### EncryptionKeyRotate Errors
+
+If the CSI-driver is unable to complete the EncryptionKeyRotate call
+successfully, it MUST return a non-ok gRPC code in the gRPC status. If the
+conditions defined below are encountered, the CSI-driver MUST return the
+specified gRPC error code. The caller MUST implement the specified error
+recovery behavior when it encounters the gRPC error code.
 
 | Condition                    | gRPC Code          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Recovery Behavior                                                                                                                                                                                                                     |
 | ---------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Missing required field       | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                     |
 | Volume does not exist        | 5 NOT_FOUND        | Indicates that a volume corresponding to the specified `volume_id` does not exist.                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Caller MUST verify that the `volume_id` is correct and that the volume is accessible and has not been deleted before retrying with exponential back off.                                                                              |
-| Operation pending for volume | 10 ABORTED         | Indicates that there is already an operation pending for the specified `volume_id`. In general the CSI-Addons CO plugin is responsible for ensuring that there is no more than one call "in-flight" per `volume_id` at a given time. However, in some circumstances, the CSI-Addons CO plugin MAY lose state (for example when the it crashes and restarts), and MAY issue multiple calls simultaneously for the same `volume_id`. The CSI driver, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `volume_id`, and then retry with exponential back off.                                                                                                   |
-| Not authenticated            | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown             | 2 UNKNOWN          | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Caller MUST study the logs before retrying                                                                                                                                                                                            |
