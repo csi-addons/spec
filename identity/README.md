@@ -3,6 +3,12 @@
 This document and the Identity Service is based on the [Container Storage
 Interface specification][csi_spec].
 
+## Notational Conventions
+
+The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+"SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" are to be
+interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
+
 ## Terminology
 
 | Term       | Definition                                                                               |
@@ -64,6 +70,20 @@ NodePlugin.
                '------------'
 ```
 
+## Error Handling
+
+All RPCs defined in this specification return a standard
+[gRPC status](https://github.com/grpc/grpc/blob/master/src/proto/grpc/status/status.proto).
+The status `code` MUST be a
+[canonical gRPC error code](https://github.com/grpc/grpc-go/blob/master/codes/codes.go);
+the CO plugin MUST handle all valid error codes. When the `code` is not `OK`, the
+status `message` MUST contain a human-readable description of the error, which MAY
+be surfaced by the CO to end users. The status `details` MUST be empty.
+
+The per-RPC Errors subsections below describe the conditions under which the
+CSI-driver MUST return a non-ok gRPC code and the recovery behavior the CO plugin
+is expected to implement.
+
 ## RPC Interface
 
 **Identity Service**: The CSI-driver **MUST** implement this, the CO-plugin
@@ -95,6 +115,23 @@ service Identity {
   rpc Probe(ProbeRequest)
   returns (ProbeResponse) {}
 }
+```
+
+The general flow of the success case MAY be as follows:
+
+```mermaid
+sequenceDiagram
+    participant CO as CSI-Addons CO plugin
+    participant Driver as CSI-driver
+    Note over CO,Driver: 1. Obtain the CSI-driver identity
+    CO->>Driver: GetIdentity
+    Driver-->>CO: name, vendor_version
+    Note over CO,Driver: 2. Query the supported CSI-Addons capabilities
+    CO->>Driver: GetCapabilities
+    Driver-->>CO: capabilities (e.g. CONTROLLER_SERVICE)
+    Note over CO,Driver: 3. Check the readiness of the CSI-driver
+    CO->>Driver: Probe
+    Driver-->>CO: ready: true
 ```
 
 ### `GetIdentity`
