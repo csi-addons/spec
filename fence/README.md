@@ -1,12 +1,17 @@
 # Network Fencing
 
+## Notational Conventions
+
+The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+"SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" are to be
+interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
+
 ## Terminology
 
 | Term     | Definition                                                                            |
 | -------- | ------------------------------------------------------------------------------------- |
 | CO       | Container Orchestration system that communicates with plugins using CSI service RPCs. |
 | SP       | Storage Provider, the vendor of a CSI plugin implementation.                          |
-| DR       | Disaster Recovery.                                                                    |
 | RPC      | [Remote Procedure Call](https://en.wikipedia.org/wiki/Remote_procedure_call).         |
 
 ## Objective
@@ -37,6 +42,41 @@ The interface declares the RPCs that a plugin MUST expose.
 
 Since the fencing is network based, the fencing mechanism will be most aptly implemented
 by the CSI Controller.
+
+## Architecture
+
+A user instructs the CSI-Addons CO plugin to fence or unfence a set of clients.
+The CO plugin inspects the capabilities advertised by the CSI-driver (see the
+[Identity](../identity/README.md) `NetworkFence` capability) and relays the
+request as a gRPC call to the CSI-driver. Because fencing is network based, the
+operation is served by the CSI Controller.
+
+## Error Handling
+
+All RPCs defined in this specification return a standard
+[gRPC status](https://github.com/grpc/grpc/blob/master/src/proto/grpc/status/status.proto).
+The status `code` MUST be a
+[canonical gRPC error code](https://github.com/grpc/grpc-go/blob/master/codes/codes.go);
+the CO MUST handle all valid error codes. When the `code` is not `OK`, the status
+`message` MUST contain a human-readable description of the error, which MAY be
+surfaced by the CO to end users. The status `details` MUST be empty.
+
+Each RPC below documents, in its Errors table, the gRPC codes the CSI-driver
+returns for the listed conditions and the recovery behavior the caller is
+expected to implement.
+
+The following error codes are common to all RPCs in this specification. In
+addition to the conditions below, each RPC MAY define further codes in its own
+Errors section.
+
+| Condition | gRPC Code | Description | Recovery Behavior |
+| --------- | --------- | ----------- | ----------------- |
+| Missing required field | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request. | Caller MUST fix the request by adding the missing required field before retrying. |
+| Invalid or unsupported field in the request | 3 INVALID_ARGUMENT | Indicates that one or more fields in the request is either not allowed by the CSI-driver or has an invalid value. | Caller MUST fix the field before retrying. |
+| Operation pending | 10 ABORTED | Indicates that there is already an operation pending for the specified resource. The CSI-driver SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified resource, and then retry with exponential back off. |
+| Call not implemented | 12 UNIMPLEMENTED | The invoked RPC is not implemented by the CSI-driver or disabled in its current mode of operation. | Caller MUST NOT retry. |
+| Not authenticated | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication. | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they pass authentication by the CSI-driver for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown | 2 UNKNOWN | Indicates that an unknown error occurred. | Caller MUST study the logs before retrying. |
 
 ## RPC Interface
 
@@ -76,6 +116,15 @@ service FenceController {
 
 ### FenceClusterNetwork
 
+The Controller plugin MUST implement this RPC call if it has the `NETWORK_FENCE`
+capability. This RPC is called by the CO to block access to the storage cluster
+for the clients identified by the provided list of CIDR blocks. This operation
+MUST be idempotent: fencing a client that is already fenced MUST succeed and
+reply `0 OK`. The operation affects only the clients identified by the provided
+CIDR blocks; clients that were already fenced remain fenced. If the operation
+fails, or the CO does not know whether it succeeded, it MAY call
+`FenceClusterNetwork` again.
+
 ```protobuf
 // FenceClusterNetworkRequest contains the information needed to identify
 // the storage cluster so that the appropriate fencing operation can be
@@ -97,7 +146,22 @@ message FenceClusterNetworkResponse {
 }
 ```
 
+#### FenceClusterNetwork Errors
+
+If the CSI-driver is unable to complete the FenceClusterNetwork call successfully, it MUST
+return a non-ok gRPC code in the gRPC status. This RPC defines no error codes
+beyond those common to all RPCs; see the [Error Handling](#error-handling)
+section.
+
 ### UnfenceClusterNetwork
+
+The Controller plugin MUST implement this RPC call if it has the `NETWORK_FENCE`
+capability. This RPC is called by the CO to remove the provided list of CIDR
+blocks from the set of fenced/blocklisted clients, restoring their access to the
+storage cluster. This operation MUST be idempotent: unfencing a client that is
+not currently fenced MUST succeed and reply `0 OK`. The operation restores access
+only for the clients identified by the provided CIDR blocks; clients not in the
+list are unaffected.
 
 ```protobuf
 // UnfenceClusterNetworkRequest contains the information needed to identify
@@ -120,7 +184,20 @@ message UnfenceClusterNetworkResponse {
 }
 ```
 
+#### UnfenceClusterNetwork Errors
+
+If the CSI-driver is unable to complete the UnfenceClusterNetwork call successfully, it MUST
+return a non-ok gRPC code in the gRPC status. This RPC defines no error codes
+beyond those common to all RPCs; see the [Error Handling](#error-handling)
+section.
+
 ### ListClusterFence
+
+The Controller plugin MUST implement this RPC call if it has the `NETWORK_FENCE`
+capability. This RPC is called by the CO to retrieve the list of CIDR blocks
+that are currently fenced/blocklisted by the CSI-driver. This is a read-only
+operation. The response contains the CIDR blocks currently fenced by the
+CSI-driver, and is empty when no client is fenced.
 
 ```protobuf
 // ListClusterFenceRequest contains the information needed to identify
@@ -140,6 +217,13 @@ message ListClusterFenceResponse {
 }
 ```
 
+#### ListClusterFence Errors
+
+If the CSI-driver is unable to complete the ListClusterFence call successfully, it MUST
+return a non-ok gRPC code in the gRPC status. This RPC defines no error codes
+beyond those common to all RPCs; see the [Error Handling](#error-handling)
+section.
+
 ### CIDR blocks
 
 ```protobuf
@@ -151,6 +235,13 @@ message CIDR {
 ```
 
 ### GetFenceClients
+
+The Controller plugin MUST implement this RPC call if it has the
+`GET_CLIENTS_TO_FENCE` capability. This RPC is called by the CO to discover the
+clients, along with their addresses, that need to be fenced. The returned
+`ClientDetails` can then be used to build the list of CIDR blocks passed to a
+subsequent `FenceClusterNetwork` or `UnfenceClusterNetwork` call. This is a
+read-only operation.
 
 ```protobuf
 // GetFenceClientsRequest contains the necessary information to identify
@@ -172,6 +263,10 @@ message GetFenceClientsResponse {
 
 ### ClientDetails
 
+`ClientDetails` describes a single client returned by `GetFenceClients`. It
+carries the client's unique identifier and the list of addresses (as CIDR
+blocks) used to fence or unfence that client.
+
 ```protobuf
 // ClientDetails holds the information about the client that requires fencing.
 message ClientDetails {
@@ -184,12 +279,9 @@ message ClientDetails {
 }
 ```
 
-#### Error Scheme
+#### GetFenceClients Errors
 
-| Condition                                   | gRPC Code             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Recovery Behavior                                                                                                                                                                                                                     |
-| ------------------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Missing required field                      | 3 INVALID_ARGUMENT    | Indicates that a required field is missing from the request.                                                         | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                         |
-| Invalid or unsupported field in the request | 3 INVALID_ARGUMENT    | Indicates that the one or more fields in this field is either not allowed by the CSI-driver or has an invalid value. | Caller MUST fix the field before retrying.                                                                                                                                                                                                |
-| Call not implemented                        | 12 UNIMPLEMENTED      | The invoked RPC is not implemented by the CSI-driver or disabled in the driver's current mode of operation.          | Caller MUST NOT retry.                                                                                                                                                                                                                    |
-| Not authenticated                           | 16 UNAUTHENTICATED    | The invoked RPC does not carry secrets that are valid for authentication.                                            | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the CSI-driver for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown                            | 2 UNKNOWN             | Indicates that a unknown error is generated                                                                          | Caller MUST study the logs before retrying                                                                                                                                                                                                |
+If the CSI-driver is unable to complete the GetFenceClients call successfully, it MUST
+return a non-ok gRPC code in the gRPC status. This RPC defines no error codes
+beyond those common to all RPCs; see the [Error Handling](#error-handling)
+section.
