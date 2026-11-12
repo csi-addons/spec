@@ -1,4 +1,10 @@
-# spec
+# CSI-Addons Operation: VolumeReplication
+
+## Notational Conventions
+
+The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+"SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" are to be
+interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
 
 ## Terminology
 
@@ -43,10 +49,42 @@ MUST expose.
 
 ![arch](../images/arch.png)
 
+## Error Handling
+
+All RPCs defined in this specification return a standard
+[gRPC status](https://github.com/grpc/grpc/blob/master/src/proto/grpc/status/status.proto).
+The status `code` MUST be a
+[canonical gRPC error code](https://github.com/grpc/grpc-go/blob/master/codes/codes.go);
+the CO MUST handle all valid error codes. When the `code` is not `OK`, the status
+`message` MUST contain a human-readable description of the error, which MAY be
+surfaced by the CO to end users. The status `details` MUST be empty.
+
+Each RPC below documents, in its Errors table, the gRPC codes the Plugin returns
+for the listed conditions and the recovery behavior the caller is expected to
+implement.
+
+The following error codes are common to all RPCs in this specification. In
+addition to the conditions below, each RPC MAY define further codes in its own
+Errors section.
+
+| Condition | gRPC Code | Description | Recovery Behavior |
+| --------- | --------- | ----------- | ----------------- |
+| Missing required field | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request. | Caller MUST fix the request by adding the missing required field before retrying. |
+| Invalid or unsupported field in the request | 3 INVALID_ARGUMENT | Indicates that one or more fields in the request is either not allowed by the Plugin or has an invalid value. | Caller MUST fix the field before retrying. |
+| Operation pending | 10 ABORTED | Indicates that there is already an operation pending for the specified resource. The Plugin SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified resource, and then retry with exponential back off. |
+| Call not implemented | 12 UNIMPLEMENTED | The invoked RPC is not implemented by the Plugin or disabled in its current mode of operation. | Caller MUST NOT retry. |
+| Not authenticated | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication. | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown | 2 UNKNOWN | Indicates that an unknown error occurred. | Caller MUST study the logs before retrying. |
+
 ## RPC Interface
 
 * **Controller Service**: The Controller plugin MUST implement these sets of
   RPCs.
+
+Throughout this specification, each RPC identifies its target by the
+`replication_source` field, which carries the id of the volume or volume group to
+operate on. The `replication_id` field is OPTIONAL: a caller MAY set it to
+uniquely identify the specific replication, and a Plugin MUST NOT require it.
 
 ```protobuf
 syntax = "proto3";
@@ -97,6 +135,15 @@ service Controller {
 
 ### EnableVolumeReplication
 
+A Controller Plugin MUST implement this RPC call if it has the `VolumeReplication`
+`VOLUME_REPLICATION` capability (see the [Identity](../identity/README.md)
+service). This RPC is called by the CO to enable replication on the volume or
+volume group identified by `replication_source`. This operation MUST be
+idempotent. If replication is already enabled for the `replication_source` and is
+compatible with the request, the Plugin MUST reply `0 OK`. If the operation fails,
+or the CO does not know whether it succeeded, it MAY call `EnableVolumeReplication`
+again.
+
 ```protobuf
 // EnableVolumeReplicationRequest holds the required information to enable
 // replication on a volume.
@@ -124,17 +171,27 @@ message EnableVolumeReplicationResponse {
 }
 ```
 
-#### Error Scheme
+#### EnableVolumeReplication Errors
+
+If the Plugin is unable to complete the requested operation successfully, it MUST
+return a non-ok gRPC code in the gRPC status. If the conditions defined below are
+encountered, the Plugin MUST return the specified gRPC error code. The CO MUST
+implement the specified error recovery behavior when it encounters the gRPC error
+code.
 
 | Condition                    | gRPC Code          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Recovery Behavior                                                                                                                                                                                                                     |
 | ---------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Missing required field       | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                     |
 | Replication Source does not exist        | 5 NOT_FOUND        | Indicates that the specified source does not exist.                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Caller MUST verify that the `replication_source` is correct, the source is accessible, and has not been deleted before retrying with exponential back off.                                                                              |
-| Operation pending for Replication Source  | 10 ABORTED         | Indicates that there is already an operation pending for the specified `replication_source`. In general the Cluster Orchestrator (CO) is responsible for ensuring that there is no more than one call "in-flight" per `replication_source` at a given time. However, in some circumstances, the CO MAY lose state (for example when the CO crashes and restarts), and MAY issue multiple calls simultaneously for the same `replication_source`. The Plugin, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `replication_source`, and then retry with exponential back off.                                                                                                   |
-| Not authenticated            | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown             | 2 UNKNOWN          | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST study the logs before retrying                                                                                                                                                                                            |
+| Replication Source cannot be enabled | 9 FAILED_PRECONDITION | Indicates that replication could not be enabled for the specified `replication_source` due to a failed precondition (for example the source is not in a state that allows replication to be enabled). | Caller SHOULD ensure that the `replication_source` meets the requirements for enabling replication. |
 
 ### DisableVolumeReplication
+
+A Controller Plugin MUST implement this RPC call if it has the `VolumeReplication`
+`VOLUME_REPLICATION` capability. This RPC is called by the CO to disable
+replication on the volume or volume group identified by `replication_source`.
+This operation MUST be idempotent: disabling replication that is already disabled
+MUST reply `0 OK`. If the `replication_source` does not exist, the Plugin MUST
+return `NOT_FOUND`, as documented in the Errors table below.
 
 ```protobuf
 // DisableVolumeReplicationRequest holds the required information to disable
@@ -163,17 +220,28 @@ message DisableVolumeReplicationResponse {
 }
 ```
 
-#### Error Scheme
+#### DisableVolumeReplication Errors
+
+If the Plugin is unable to complete the requested operation successfully, it MUST
+return a non-ok gRPC code in the gRPC status. If the conditions defined below are
+encountered, the Plugin MUST return the specified gRPC error code. The CO MUST
+implement the specified error recovery behavior when it encounters the gRPC error
+code.
 
 | Condition                    | gRPC Code          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Recovery Behavior                                                                                                                                                                                                                     |
 | ---------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Missing required field       | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                     |
 | Replication Source does not exist        | 5 NOT_FOUND        | Indicates that the specified source does not exist.                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Caller MUST verify that the `replication_source` is correct, the source is accessible, and has not been deleted before retrying with exponential back off.                                                                              |
-| Operation pending for Replication Source | 10 ABORTED         | Indicates that there is already an operation pending for the specified `replication_source`. In general the Cluster Orchestrator (CO) is responsible for ensuring that there is no more than one call "in-flight" per `replication_source` at a given time. However, in some circumstances, the CO MAY lose state (for example when the CO crashes and restarts), and MAY issue multiple calls simultaneously for the same `replication_source`. The Plugin, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `replication_source`, and then retry with exponential back off.                                                                                                   |
-| Not authenticated            | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown             | 2 UNKNOWN          | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST study the logs before retrying                                                                                                                                                                                            |
 
 ### PromoteVolume
+
+A Controller Plugin MUST implement this RPC call if it has the `VolumeReplication`
+`VOLUME_REPLICATION` capability. This RPC is called by the CO to promote the
+volume or volume group identified by `replication_source` to the primary role on
+the local cluster, so that it can be used by a workload. This operation MUST be
+idempotent. If the `replication_source` is already primary and compatible with the
+request, the Plugin MUST reply `0 OK`. The optional `force` flag MAY be set to
+force promotion when the Plugin would otherwise reject it due to a failed
+precondition.
 
 ```protobuf
 // PromoteVolumeRequest holds the required information to promote volume as a
@@ -205,19 +273,27 @@ message PromoteVolumeResponse{
 }
 ```
 
-#### Error Scheme
+#### PromoteVolume Errors
+
+If the Plugin is unable to complete the requested operation successfully, it MUST
+return a non-ok gRPC code in the gRPC status. If the conditions defined below are
+encountered, the Plugin MUST return the specified gRPC error code. The CO MUST
+implement the specified error recovery behavior when it encounters the gRPC error
+code.
 
 | Condition                    | gRPC Code             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Recovery Behavior                                                                                                                                                                                                                     |
 | ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Missing required field       | 3 INVALID_ARGUMENT    | Indicates that a required field is missing from the request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                     |
 | Replication Source does not exist        | 5 NOT_FOUND        | Indicates that the specified source does not exist.                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Caller MUST verify that the `replication_source` is correct, the source is accessible, and has not been deleted before retrying with exponential back off.                                                                              |
 | Replication Source is not replicated     | 9 FAILED_PRECONDITION | Indicates that the Source corresponding to the specified `replication_source` could not be promoted due to failed precondition (for example replication is not enabled or Source cannot be promoted without force option).                                                                                                                                                                                                                                                                                                                         | Caller SHOULD ensure that replication is enabled.                                                                                                                                                                                     |
-| Operation pending for Replication Source | 10 ABORTED            | Indicates that there is already an operation pending for the specified `replication_source`. In general the Cluster Orchestrator (CO) is responsible for ensuring that there is no more than one call "in-flight" per `replication_source` at a given time. However, in some circumstances, the CO MAY lose state (for example when the CO crashes and restarts), and MAY issue multiple calls simultaneously for the same `replication_source`. The Plugin, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `replication_source`, and then retry with exponential back off.                                                                                                   |
-| Call not implemented         | 12 UNIMPLEMENTED      | The invoked RPC is not implemented by the Plugin or disabled in the Plugin's current mode of operation.                                                                                                                                                                                                                                                                                                                                                                                                                                   | Caller MUST NOT retry.                                                                                                                                                                                                                |
-| Not authenticated            | 16 UNAUTHENTICATED    | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown             | 2 UNKNOWN             | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST study the logs before retrying                                                                                                                                                                                            |
 
 ### DemoteVolume
+
+A Controller Plugin MUST implement this RPC call if it has the `VolumeReplication`
+`VOLUME_REPLICATION` capability. This RPC is called by the CO to demote the volume
+or volume group identified by `replication_source` to the secondary role on the
+local cluster. This operation MUST be idempotent. If the `replication_source` is
+already secondary, the Plugin MUST reply `0 OK`. The optional `force` flag MAY be
+set to force demotion.
 
 ```protobuf
 // DemoteVolumeRequest holds the required information to demote volume on local
@@ -249,19 +325,29 @@ message DemoteVolumeResponse{
 }
 ```
 
-#### Error Scheme
+#### DemoteVolume Errors
+
+If the Plugin is unable to complete the requested operation successfully, it MUST
+return a non-ok gRPC code in the gRPC status. If the conditions defined below are
+encountered, the Plugin MUST return the specified gRPC error code. The CO MUST
+implement the specified error recovery behavior when it encounters the gRPC error
+code.
 
 | Condition                    | gRPC Code             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Recovery Behavior                                                                                                                                                                                                                     |
 | ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Missing required field       | 3 INVALID_ARGUMENT    | Indicates that a required field is missing from the request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                     |
 | Replication Source does not exist        | 5 NOT_FOUND           | Indicates that the specified source does not exist.                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Caller MUST verify that the `replication_source` is correct, the source is accessible, and has not been deleted before retrying with exponential back off.                                                                              |
-| Replication Source in not replicated     | 9 FAILED_PRECONDITION | Indicates that the Replication Source corresponding to the specified `replication_source` could not be demoted due to failed precondition (for example replication is not enabled).                                                                                                                                                                                                                                                                                                                                                                            | Caller SHOULD ensure that replication is enabled.                                                                                                                                                                                     |
-| Operation pending for Replication Source | 10 ABORTED            | Indicates that there is already an operation pending for the specified `replication_source`. In general the Cluster Orchestrator (CO) is responsible for ensuring that there is no more than one call "in-flight" per `replication_source` at a given time. However, in some circumstances, the CO MAY lose state (for example when the CO crashes and restarts), and MAY issue multiple calls simultaneously for the same `replication_source`. The Plugin, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `replication_source`, and then retry with exponential back off.                                                                                                   |
-| Call not implemented         | 12 UNIMPLEMENTED      | The invoked RPC is not implemented by the Plugin or disabled in the Plugin's current mode of operation.                                                                                                                                                                                                                                                                                                                                                                                                                                   | Caller MUST NOT retry.                                                                                                                                                                                                                |
-| Not authenticated            | 16 UNAUTHENTICATED    | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown             | 2 UNKNOWN             | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST study the logs before retrying                                                                                                                                                                                            |
+| Replication Source is not replicated     | 9 FAILED_PRECONDITION | Indicates that the Replication Source corresponding to the specified `replication_source` could not be demoted due to failed precondition (for example replication is not enabled).                                                                                                                                                                                                                                                                                                                                                                            | Caller SHOULD ensure that replication is enabled.                                                                                                                                                                                     |
 
 ### ResyncVolume
+
+A Controller Plugin MUST implement this RPC call if it has the `VolumeReplication`
+`VOLUME_REPLICATION` capability. This RPC is called by the CO to resynchronize the
+volume or volume group identified by `replication_source` with its peer after a
+failover, so that it is consistent and can be used again. This operation MUST be
+idempotent. The `ready` field in the response indicates whether the
+`replication_source` is consistent and ready to use; while `ready` is `false` the
+CO SHOULD reissue `ResyncVolume` until it becomes `true`. The optional `force`
+flag MAY be set.
 
 ```protobuf
 // ResyncVolumeRequest holds the required information to resync volume.
@@ -296,19 +382,28 @@ message ResyncVolumeResponse{
 }
 ```
 
-#### Error Scheme
+#### ResyncVolume Errors
+
+If the Plugin is unable to complete the requested operation successfully, it MUST
+return a non-ok gRPC code in the gRPC status. If the conditions defined below are
+encountered, the Plugin MUST return the specified gRPC error code. The CO MUST
+implement the specified error recovery behavior when it encounters the gRPC error
+code.
 
 | Condition                                        | gRPC Code             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Recovery Behavior                                                                                                                                                                                                                     |
 | ------------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Missing required field                           | 3 INVALID_ARGUMENT    | Indicates that a required field is missing from the request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                     |
 | Replication Source does not exist                            | 5 NOT_FOUND           | Indicates that the specified source does not exist.                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Caller MUST verify that the `replication_source` is correct, the source is accessible, and has not been deleted before retrying with exponential back off.                                                                              |
 | Replication Source is not replicated or Replication Source is not demoted | 9 FAILED_PRECONDITION | Indicates that the `replication_source` could not be resynced due to failed precondition (for example replication is not enabled on `replication_source` or the`replication_source` is not in the demoted state).                                                                                                                                                                                                                                                                                                                                    | Caller SHOULD ensure that Replication is enabled and the Replication Source is demoted.                                                                                                                                                            |
-| Operation pending for Replication Source                     | 10 ABORTED            | Indicates that there is already an operation pending for the specified `replication_source`. In general the Cluster Orchestrator (CO) is responsible for ensuring that there is no more than one call "in-flight" per `replication_source` at a given time. However, in some circumstances, the CO MAY lose state (for example when the CO crashes and restarts), and MAY issue multiple calls simultaneously for the same `replication_source`. The Plugin, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `replication_source`, and then retry with exponential back off.                                                                                                   |
-| Call not implemented                             | 12 UNIMPLEMENTED      | The invoked RPC is not implemented by the Plugin or disabled in the Plugin's current mode of operation.                                                                                                                                                                                                                                                                                                                                                                                                                                   | Caller MUST NOT retry.                                                                                                                                                                                                                |
-| Not authenticated                                | 16 UNAUTHENTICATED    | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown                                 | 2 UNKNOWN             | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST study the logs before retrying                                                                                                                                                                                            |
 
 ### GetVolumeReplicationInfo
+
+A Controller Plugin MUST implement this RPC call if it has the `VolumeReplication`
+`VOLUME_REPLICATION` capability. This RPC is called by the CO to retrieve
+replication information such as the last sync time, duration and bytes, and the
+current replication status for the volume or volume group identified by
+`replication_source`. This is a read-only operation. The response always carries
+`last_sync_time` and `status`, and MAY carry `last_sync_duration`,
+`last_sync_bytes` and `status_message`.
 
 ```protobuf
 // GetVolumeReplicationInfoRequest holds the required information to get
@@ -372,19 +467,30 @@ message GetVolumeReplicationInfoResponse {
 }
 ```
 
-#### Error Scheme
+#### GetVolumeReplicationInfo Errors
+
+If the Plugin is unable to complete the requested operation successfully, it MUST
+return a non-ok gRPC code in the gRPC status. If the conditions defined below are
+encountered, the Plugin MUST return the specified gRPC error code. The CO MUST
+implement the specified error recovery behavior when it encounters the gRPC error
+code.
 
 | Condition                                        | gRPC Code             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Recovery Behavior                                                                                                                                                                                                                     |
 | ------------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Missing required field                           | 3 INVALID_ARGUMENT    | Indicates that a required field is missing from the request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                     |
-| Replication Source does not exist or details not found                           | 5 NOT_FOUND           | Indicates that a Replication Source does not exist or details of `replication_source` are not avaiable at the moment.                                                                                                                                                                                                                                                                                                                                                                                                                            | Caller MUST verify that the `replication_source` is correct and that the `replication_source` is accessible and has not been deleted before retrying with exponential back off.                                                                              |
-| Replication Source is not replicated or not promoted | 9 FAILED_PRECONDITION | Indicates that the replication information corresponding to the specified `replication_source` could not retrived due to failed precondition (for example replication is not enabled or not in the primary state).                                                                                                                                                                                                                                                                                                                                    | Caller SHOULD ensure that replication is enabled on the `replication_source` and it is promoted.                                                                                                                                                            |
-| Operation pending for Replication Source                     | 10 ABORTED            | Indicates that there is already an operation pending for the specified `replication_source`. In general the Cluster Orchestrator (CO) is responsible for ensuring that there is no more than one call "in-flight" per `replication_source` at a given time. However, in some circumstances, the CO MAY lose state (for example when the CO crashes and restarts), and MAY issue multiple calls simultaneously for the same `replication_source`. The Plugin, SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified `replication_source`, and then retry with exponential back off.                                                                                                   |
-| Call not implemented                             | 12 UNIMPLEMENTED      | The invoked RPC is not implemented by the Plugin or disabled in the Plugin's current mode of operation.                                                                                                                                                                                                                                                                                                                                                                                                                                   | Caller MUST NOT retry.                                                                                                                                                                                                                |
-| Not authenticated                                | 16 UNAUTHENTICATED    | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they will pass authentication by the Plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown                                 | 2 UNKNOWN             | Indicates that a unknown error is generated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Caller MUST study the logs before retrying                                                                                                                                                                                            |
+| Replication Source does not exist or details not found                           | 5 NOT_FOUND           | Indicates that a Replication Source does not exist or details of `replication_source` are not available at the moment.                                                                                                                                                                                                                                                                                                                                                                                                                            | Caller MUST verify that the `replication_source` is correct and that the `replication_source` is accessible and has not been deleted before retrying with exponential back off.                                                                              |
+| Replication Source is not replicated or not promoted | 9 FAILED_PRECONDITION | Indicates that the replication information corresponding to the specified `replication_source` could not be retrieved due to failed precondition (for example replication is not enabled or not in the primary state).                                                                                                                                                                                                                                                                                                                                    | Caller SHOULD ensure that replication is enabled on the `replication_source` and it is promoted.                                                                                                                                                            |
 
 ### GetReplicationDestinationInfo
+
+A Controller Plugin MUST implement this RPC call if it has the `VolumeReplication`
+`GET_REPLICATION_DESTINATION_INFO` capability (see the
+[Identity](../identity/README.md) service). This RPC is called by the CO to obtain
+the destination volume or volume group details for an existing replication, for
+storage systems where the source and destination identifiers differ. This is a
+read-only operation. It returns the destination volume or volume group identifiers
+on the remote/target cluster. If the destination details are not yet available
+(for example replication has not finished establishing), the Plugin MAY return
+`UNAVAILABLE` and the CO SHOULD retry with exponential back off.
 
 ```protobuf
 // GetReplicationDestinationInfoRequest holds the required information to
@@ -447,20 +553,24 @@ message ReplicationDestination {
 }
 ```
 
-#### Error Scheme
+#### GetReplicationDestinationInfo Errors
+
+If the Plugin is unable to complete the requested operation successfully, it MUST
+return a non-ok gRPC code in the gRPC status. If the conditions defined below are
+encountered, the Plugin MUST return the specified gRPC error code. The CO MUST
+implement the specified error recovery behavior when it encounters the gRPC error
+code.
 
 | Condition                                | gRPC Code             | Description                                                                        | Recovery Behavior                                                                                                     |
 | ---------------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Missing required field                   | 3 INVALID_ARGUMENT    | A required field is missing from the request.                                      | Caller MUST fix the request by adding the missing required field before retrying.                                     |
 | Replication Source does not exist        | 5 NOT_FOUND           | The specified source does not exist.                                               | Caller MUST verify that the `replication_source` is correct and accessible before retrying with exponential back off. |
 | Replication Source is not replicated     | 9 FAILED_PRECONDITION | Destination information could not be retrieved because replication is not enabled. | Caller SHOULD ensure that replication is enabled on the `replication_source`.                                         |
 | Destination info not yet available       | 14 UNAVAILABLE        | Destination details are not yet available. The SP needs time after replication.    | Caller SHOULD retry with exponential back off. This is transient and resolves once replication is fully established.  |
-| Operation pending for Replication Source | 10 ABORTED            | There is already an operation pending for the specified `replication_source`.      | Caller SHOULD ensure no other calls are pending for the `replication_source`, then retry with exponential back off.   |
-| Call not implemented                     | 12 UNIMPLEMENTED      | The invoked RPC is not implemented by the Plugin.                                  | Caller MUST NOT retry.                                                                                                |
-| Not authenticated                        | 16 UNAUTHENTICATED    | The invoked RPC does not carry valid secrets for authentication.                   | Caller SHALL fix or regenerate the secrets, then retry.                                                               |
-| Error is Unknown                         | 2 UNKNOWN             | An unknown error occurred.                                                         | Caller MUST study the logs before retrying.                                                                           |
 
 ### ReplicationSource
+
+`ReplicationSource` identifies the entity a replication operation acts on — either
+a single volume or a volume group. It is passed to every replication RPC.
 
 ```protobuf
 // Specifies what source the replication will be created from. One of the
