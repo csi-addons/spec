@@ -1,0 +1,61 @@
+name: publish-specs
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-specs
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      # required to push to the gh-pages branch
+      contents: write
+
+    steps:
+    - name: checkout source
+      uses: actions/checkout@v7
+
+    - name: stage specifications
+      run: |
+        mkdir -p _site_src
+        cp README.md _site_src/
+        cp -r images _site_src/
+        for dir in */; do
+          dir=${dir%/}
+          if [ -f "${dir}/README.md" ]; then
+            mkdir -p "_site_src/${dir}"
+            cp "${dir}/README.md" "_site_src/${dir}/"
+            cp "${dir}"/*.proto "_site_src/${dir}/" 2>/dev/null || true
+          fi
+        done
+        # GitHub Pages renders the markdown with Jekyll
+        cat > _site_src/_config.yml <<EOF
+        title: CSI-Addons Specifications
+        theme: jekyll-theme-cayman
+        plugins:
+          - jekyll-default-layout
+          - jekyll-optional-front-matter
+          - jekyll-readme-index
+          - jekyll-relative-links
+        relative_links:
+          enabled: true
+          collections: false
+        EOF
+
+    - name: publish to gh-pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: _site_src
+        publish_branch: gh-pages
+        # do not add .nojekyll, GitHub Pages needs to render the markdown
+        enable_jekyll: true
