@@ -37,19 +37,8 @@ jobs:
             cp "${dir}"/*.proto "_site_src/${dir}/" 2>/dev/null || true
           fi
         done
-        # GitHub Pages renders the markdown with Jekyll
-        cat > _site_src/_config.yml <<EOF
-        title: CSI-Addons Specifications
-        theme: jekyll-theme-cayman
-        plugins:
-          - jekyll-default-layout
-          - jekyll-optional-front-matter
-          - jekyll-readme-index
-          - jekyll-relative-links
-        relative_links:
-          enabled: true
-          collections: false
-        EOF
+        # Jekyll config, layout and CSS used by GitHub Pages to render the markdown
+        cp -r .github/pages/. _site_src/
 
     - name: publish to gh-pages
       uses: peaceiris/actions-gh-pages@v4
