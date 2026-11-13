@@ -1,0 +1,238 @@
+/* Styling matches https://csi-addons.github.io/ */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --color-primary: #2563eb;
+  --color-primary-dark: #1d4ed8;
+  --color-primary-light: #93c5fd;
+  --color-primary-bg: #eff6ff;
+  --color-text: #1e293b;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  --color-bg: #fff;
+  --color-bg-alt: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-code-bg: #0f172a;
+  --color-code-text: #e2e8f0;
+  --font-sans: -apple-system, blinkmacsystemfont, "Segoe UI", roboto, "Helvetica Neue", arial, sans-serif;
+  --font-mono: "SFMono-Regular", consolas, "Liberation Mono", menlo, monospace;
+  --radius: 8px;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Footer */
+.footer {
+  background: var(--color-code-bg);
+  color: var(--color-text-muted);
+  padding: 32px 0;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.footer a {
+  color: var(--color-primary-light);
+}
+
+/* Navbar */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgb(255 255 255 / 95%);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.nav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  max-width: 1200px;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.nav-logo:hover {
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.nav-links a:hover {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.nav-github {
+  padding: 6px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.nav-github:hover {
+  background: var(--color-bg-alt);
+}
+
+/* Rendered markdown */
+.content {
+  padding-top: 104px;
+  padding-bottom: 64px;
+  min-height: 80vh;
+}
+
+.content h1,
+.content h2,
+.content h3,
+.content h4 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 2rem 0 1rem;
+}
+
+.content h1 {
+  font-size: 2.25rem;
+  margin-top: 0;
+}
+
+.content h2 {
+  font-size: 1.6rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.content h3 {
+  font-size: 1.25rem;
+}
+
+.content p,
+.content ul,
+.content ol,
+.content table,
+.content pre,
+.content blockquote {
+  margin-bottom: 1rem;
+}
+
+.content ul,
+.content ol {
+  padding-left: 1.5rem;
+}
+
+.content li {
+  color: var(--color-text-secondary);
+}
+
+.content p {
+  color: var(--color-text-secondary);
+}
+
+.content img {
+  max-width: 100%;
+}
+
+.content blockquote {
+  padding: 0.5rem 1rem;
+  background: var(--color-primary-bg);
+  border-left: 4px solid var(--color-primary-light);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.content table {
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+
+.content th,
+.content td {
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+}
+
+.content th {
+  background: var(--color-bg-alt);
+}
+
+.content code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  padding: 0.15em 0.4em;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.content pre {
+  padding: 20px;
+  overflow-x: auto;
+  background: var(--color-code-bg);
+  border-radius: 12px;
+}
+
+.content pre code {
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-code-text);
+  line-height: 1.7;
+}
+
+@media (width <= 768px) {
+  .nav-links {
+    gap: 16px;
+  }
+
+  .content h1 {
+    font-size: 1.75rem;
+  }
+}

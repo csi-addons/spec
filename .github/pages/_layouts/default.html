@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if page.title %}{{ page.title }} - {% endif %}{{ site.title }}</title>
+  <link rel="stylesheet" href="{{ site.github.url }}/assets/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="https://csi-addons.github.io/" class="nav-logo">
+        <svg class="logo-icon" viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="6" fill="#2563eb"/>
+          <path d="M8 12h6v8H8zM18 8h6v12h-6zM13 16h6v4h-6z" fill="#fff" opacity="0.9"/>
+          <path d="M13 10h6v4h-6z" fill="#93c5fd"/>
+        </svg>
+        <span>CSI-Addons</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ site.github.url }}/">Specifications</a></li>
+        <li><a href="https://csi-addons.github.io/">Project</a></li>
+        <li><a href="https://github.com/csi-addons/spec" class="nav-github">GitHub</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container content">
+    {{ content }}
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>Licensed under the
+        <a href="https://github.com/csi-addons/spec/blob/main/LICENSE">Apache License 2.0</a>.</p>
+    </div>
+  </footer>
+</body>
+</html>
