@@ -1,0 +1,50 @@
+name: publish-specs
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-specs
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      # required to push to the gh-pages branch
+      contents: write
+
+    steps:
+    - name: checkout source
+      uses: actions/checkout@v7
+
+    - name: stage specifications
+      run: |
+        mkdir -p _site_src
+        cp README.md _site_src/
+        cp -r images _site_src/
+        for dir in */; do
+          dir=${dir%/}
+          if [ -f "${dir}/README.md" ]; then
+            mkdir -p "_site_src/${dir}"
+            cp "${dir}/README.md" "_site_src/${dir}/"
+            cp "${dir}"/*.proto "_site_src/${dir}/" 2>/dev/null || true
+          fi
+        done
+        # Jekyll config, layout and CSS used by GitHub Pages to render the markdown
+        cp -r .github/pages/. _site_src/
+
+    - name: publish to gh-pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: _site_src
+        publish_branch: gh-pages
+        # do not add .nojekyll, GitHub Pages needs to render the markdown
+        enable_jekyll: true
