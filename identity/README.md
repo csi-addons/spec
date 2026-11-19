@@ -59,7 +59,7 @@ NodePlugin.
 
 ```text
 .------.       .------------.
-| User |-------| CSI-Addons |
+| User | ------- | CSI-Addons |
 '------'       | CO-plugin  |
                '------------'
                       |
@@ -304,7 +304,7 @@ message Capability {
       // GET_REPLICATION_DESTINATION_INFO indicates that the CSI-driver
       // supports getting the destination volume or volume group details
       // for a replication relationship. This capability is relevant for
-      // storage providers where source and destination volume or volume
+      // Storage Providers where source and destination volume or volume
       // group identifiers differ.
       GET_REPLICATION_DESTINATION_INFO = 2;
     }
@@ -415,8 +415,8 @@ The CSI-Addons CO plugin MAY invoke this RPC at any time.
 The CSI-Addons CO plugin MAY invoke this call multiple times with the
 understanding that a CSI-driver's implementation MAY NOT be trivial and there
 MAY be overhead incurred by such repeated calls.
-The SP SHALL document guidance and known limitations regarding a particular
-CSI-driver's implementation of this RPC.
+The Storage Provider (SP) SHALL document guidance and known limitations
+regarding a particular CSI-driver's implementation of this RPC.
 For example, the SP MAY document the maximum frequency at which its Probe
 implementation SHOULD be called.
 

@@ -211,7 +211,7 @@ message GetVolumeReplicationInfoResponse {
   // The value of this field MUST NOT be negative.
   int64 last_sync_bytes = 3;
   // Represents the type of replication status that can be returned
-  // by a storage vendor.
+  // by a Storage Provider.
   enum Status {
     // UNKNOWN indicates that the SP does not know the current
     // replication status.

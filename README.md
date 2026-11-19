@@ -19,7 +19,7 @@ client using corresponding CIDR blocks.
 ## Reclaim Space
 
 The [Reclaim Space](reclaimspace/README.md) specification defines an extension
-to the CSI Specification that will enable storage vendors to develop
+to the CSI Specification that will enable Storage Providers to develop
 controllers/plugins that can free unused storage allocations from existing
 volumes.
 
@@ -32,13 +32,13 @@ which can be used for disaster recovery operations.
 ## Volume Group
 
 The [Volume Group](volumegroup/README.md) specification provides a
-standard that will enable storage vendors to develop
+standard that will enable Storage Providers to develop
 controllers/plugins for managing VolumeGroups.
 
 ## Encryption Key Rotation
 
 The [Encryption Key Rotation](encryptionkeyrotation/README.md) specification
-defines an extension to the CSI Specification that will enable storage vendors
+defines an extension to the CSI Specification that will enable Storage Providers
 to develop controllers/plugins that can rotate the Key Encryption Keys of
 existing encrypted volumes.
 
