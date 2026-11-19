@@ -18,8 +18,9 @@ interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
 
 ## Objective
 
-Define a standard that will enable storage vendors (SP) to develop
-controllers/plugins for DR or to talk to the different CO systems.
+Define a standard that will enable Storage Providers (SP) to develop
+controllers/plugins for disaster recovery (DR) or to talk to the different CO
+systems.
 
 ### Goals in MVP
 
@@ -41,7 +42,7 @@ The new standard will
 ## Solution Overview
 
 This specification defines an interface along with the minimum operational and
-packaging recommendations for a storage provider (SP) to implement a
+packaging recommendations for a Storage Provider (SP) to implement a
 Replication compatible plugin. The interface declares the RPCs that a plugin
 MUST expose.
 
@@ -442,7 +443,7 @@ message GetVolumeReplicationInfoResponse {
   // The value of this field MUST NOT be negative.
   int64 last_sync_bytes = 3;
   // Represents the type of replication status that can be returned
-  // by a storage vendor.
+  // by a Storage Provider.
   enum Status {
     // UNKNOWN indicates that the SP does not know the current
     // replication status.

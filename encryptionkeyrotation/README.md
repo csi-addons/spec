@@ -17,9 +17,9 @@ interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
 
 ## Objective
 
-Define an extension to the CSI specification that will enable storage vendors
-(SP) to develop controllers/plugins that can rotate the Key Encryption Keys (KEK)
-of existing volumes that are encrypted.
+Define an extension to the CSI specification that will enable Storage Providers
+(SP) to develop controllers/plugins that can rotate the Key Encryption Keys
+(KEK) of existing volumes that are encrypted.
 
 ### Supported Features
 
@@ -37,7 +37,7 @@ This extension defines a procedure that
 ## Solution Overview
 
 This specification defines an interface along with the minimum operational and
-packaging recommendations for a storage provider (SP) to implement a key rotate operation for volumes. The interface declares the RPCs that a plugin
+packaging recommendations for a Storage Provider (SP) to implement a key rotate operation for volumes. The interface declares the RPCs that a plugin
 MUST expose.
 
 ## Architecture

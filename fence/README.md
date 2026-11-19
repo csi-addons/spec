@@ -16,7 +16,7 @@ interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
 
 ## Objective
 
-Define a standard that will enable storage providers (SP) to
+Define a standard that will enable Storage Providers (SP) to
 perform node level fencing using corresponding CIDR blocks.
 
 ### Goals in MVP
@@ -37,7 +37,7 @@ node of CO, and thus preventing further access and corruption of data.
 ## Solution Overview
 
 This specification defines an interface along with the minimum operational and
-packaging recommendations for a storage provider (SP) to implement fencing operation.
+packaging recommendations for a Storage Provider (SP) to implement fencing operation.
 The interface declares the RPCs that a plugin MUST expose.
 
 Since the fencing is network based, the fencing mechanism will be most aptly implemented

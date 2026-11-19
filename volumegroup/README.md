@@ -20,7 +20,7 @@ interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
 
 ## Objective
 
-Define a standard that will enable storage vendors (SP) to develop
+Define a standard that will enable Storage Providers (SP) to develop
 controllers/plugins for managing VolumeGroups. The interface declares the RPCs
 for creating, deleting, modifying, and querying groups of volumes that are
 managed as a single unit; a plugin implements each RPC according to the
@@ -42,7 +42,7 @@ This standard provides
 ## Solution Overview
 
 This specification defines an interface along with the minimum operational and
-packaging recommendations for a storage provider (SP) to implement a VolumeGroup
+packaging recommendations for a Storage Provider (SP) to implement a VolumeGroup
 compatible plugin. The interface declares the RPCs that a plugin implements
 according to the capabilities it advertises (see each RPC's section).
 
@@ -263,8 +263,8 @@ operation MUST be idempotent.
 By adding an existing volume to a group, however, there is no way to pass in parameters to influence placement when
 provisioning a volume.
 
-It is out of the scope of the CSI spec to determine whether a group is consistent or not. It is up to the storage
-provider to clarify that in the vendor specific documentation. This is true either when creating a new volume with a
+It is out of the scope of the CSI spec to determine whether a group is consistent or not. It is up to the Storage
+Provider to clarify that in the vendor specific documentation. This is true either when creating a new volume with a
 group id or adding an existing volume to a group.
 
 CSI drivers supporting MODIFY_VOLUME_GROUP MUST implement ModifyVolumeGroupMembership RPC.
