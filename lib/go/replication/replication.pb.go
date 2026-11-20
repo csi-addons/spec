@@ -27,7 +27,7 @@ const (
 )
 
 // Represents the type of replication status that can be returned
-// by a storage vendor.
+// by a Storage Provider.
 type GetVolumeReplicationInfoResponse_Status int32
 
 const (
