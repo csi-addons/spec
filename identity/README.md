@@ -57,17 +57,10 @@ The CSI-Addons plugin for the CO inspects the instruction from the user, and
 formats it into an operation that is sent to the CSI-driver Controller and/or
 NodePlugin.
 
-```text
-.------.       .------------.
-| User | ------- | CSI-Addons |
-'------'       | CO-plugin  |
-               '------------'
-                      |
-                      | gRPC
-                      |
-               .------------.
-               | CSI-driver |
-               '------------'
+```mermaid
+flowchart TD
+    User[User] --> CO["CSI-Addons<br/>CO-plugin"]
+    CO -->|gRPC| Driver[CSI-driver]
 ```
 
 ## Error Handling
