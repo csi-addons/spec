@@ -1,8 +1,9 @@
+---
 name: Lint Code Base
 
 on:
   pull_request:
-    branches: [ '*' ]
+    branches: ["*"]
 
 permissions: read-all
 
@@ -17,21 +18,21 @@ jobs:
       statuses: write
 
     steps:
-    - name: checkout source
-      uses: actions/checkout@v4
-      with:
-        # super-linter needs the full git history to get the
-        # list of files that changed across commits
-        fetch-depth: 0
+      - name: checkout source
+        uses: actions/checkout@v4
+        with:
+          # super-linter needs the full git history to get the
+          # list of files that changed across commits
+          fetch-depth: 0
 
-    - name: Lint Code Base
-      uses: github/super-linter@v6
-      env:
-        LINTER_RULES_PATH: extras
-        # disabling go test as its auto generated code
-        VALIDATE_GO: false
-        # disabling linting process of the natural language
-        VALIDATE_NATURAL_LANGUAGE: false
-        MARKDOWN_CONFIG_FILE: .markdownlint.json
-        # To report GitHub Actions status checks
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Lint Code Base
+        uses: github/super-linter@v7
+        env:
+          LINTER_RULES_PATH: extras
+          # disabling go test as its auto generated code
+          VALIDATE_GO: false
+          # disabling linting process of the natural language
+          VALIDATE_NATURAL_LANGUAGE: false
+          MARKDOWN_CONFIG_FILE: .markdownlint.json
+          # To report GitHub Actions status checks
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

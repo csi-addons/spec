@@ -1,8 +1,9 @@
+---
 name: protoc
 
 on:
   pull_request:
-    branches: [ '*' ]
+    branches: ["*"]
 
 permissions: read-all
 
@@ -10,10 +11,10 @@ jobs:
   test-protoc:
     runs-on: ubuntu-latest
     steps:
-    - name: checkout source
-      uses: actions/checkout@v4
+      - name: checkout source
+        uses: actions/checkout@v4
 
-    - name: generate go libs using protoc
-      run: |
-        make
-        make check-changes
+      - name: generate go libs using protoc
+        run: |
+          make
+          make check-changes
