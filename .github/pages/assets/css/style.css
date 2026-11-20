@@ -20,6 +20,8 @@
   --color-border: #e2e8f0;
   --color-code-bg: #0f172a;
   --color-code-text: #e2e8f0;
+
+  /* prettier-ignore */
   --font-sans: -apple-system, blinkmacsystemfont, "Segoe UI", roboto, "Helvetica Neue", arial, sans-serif;
   --font-mono: "SFMono-Regular", consolas, "Liberation Mono", menlo, monospace;
   --radius: 8px;

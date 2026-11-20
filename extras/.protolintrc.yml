@@ -1,5 +1,6 @@
 # Reference https://github.com/yoheimuta/protolint/blob/master/_example/config/.protolint.yaml
 
+---
 lint:
   rules:
     # Determines whether or not to include the default set of linters.
