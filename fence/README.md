@@ -8,15 +8,15 @@ interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
 
 ## Terminology
 
-| Term     | Definition                                                                            |
-| -------- | ------------------------------------------------------------------------------------- |
-| CO       | Container Orchestration system that communicates with plugins using CSI service RPCs. |
-| SP       | Storage Provider, the vendor of a CSI plugin implementation.                          |
-| RPC      | [Remote Procedure Call](https://en.wikipedia.org/wiki/Remote_procedure_call).         |
+| Term | Definition                                                                            |
+| ---- | ------------------------------------------------------------------------------------- |
+| CO   | Container Orchestration system that communicates with plugins using CSI service RPCs. |
+| SP   | Storage Provider, the vendor of a CSI plugin implementation.                          |
+| RPC  | [Remote Procedure Call](https://en.wikipedia.org/wiki/Remote_procedure_call).         |
 
 ## Objective
 
-Define a standard that will enable storage providers (SP) to
+Define a standard that will enable Storage Providers (SP) to
 perform node level fencing using corresponding CIDR blocks.
 
 ### Goals in MVP
@@ -31,13 +31,13 @@ node of CO, and thus preventing further access and corruption of data.
 
 ### Non-Goals in MVP
 
-* Application level fencing, i.e blocklisting by maintaining a list of applications
+- Application level fencing, i.e blocklisting by maintaining a list of applications
   that are to be denied access.
 
 ## Solution Overview
 
 This specification defines an interface along with the minimum operational and
-packaging recommendations for a storage provider (SP) to implement fencing operation.
+packaging recommendations for a Storage Provider (SP) to implement fencing operation.
 The interface declares the RPCs that a plugin MUST expose.
 
 Since the fencing is network based, the fencing mechanism will be most aptly implemented
@@ -69,18 +69,18 @@ The following error codes are common to all RPCs in this specification. In
 addition to the conditions below, each RPC MAY define further codes in its own
 Errors section.
 
-| Condition | gRPC Code | Description | Recovery Behavior |
-| --------- | --------- | ----------- | ----------------- |
-| Missing required field | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request. | Caller MUST fix the request by adding the missing required field before retrying. |
-| Invalid or unsupported field in the request | 3 INVALID_ARGUMENT | Indicates that one or more fields in the request is either not allowed by the CSI-driver or has an invalid value. | Caller MUST fix the field before retrying. |
-| Operation pending | 10 ABORTED | Indicates that there is already an operation pending for the specified resource. The CSI-driver SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified resource, and then retry with exponential back off. |
-| Call not implemented | 12 UNIMPLEMENTED | The invoked RPC is not implemented by the CSI-driver or disabled in its current mode of operation. | Caller MUST NOT retry. |
-| Not authenticated | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication. | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they pass authentication by the CSI-driver for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown | 2 UNKNOWN | Indicates that an unknown error occurred. | Caller MUST study the logs before retrying. |
+| Condition                                   | gRPC Code          | Description                                                                                                                                                                                             | Recovery Behavior                                                                                                                                                                                                                    |
+| ------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Missing required field                      | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request.                                                                                                                                            | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                    |
+| Invalid or unsupported field in the request | 3 INVALID_ARGUMENT | Indicates that one or more fields in the request is either not allowed by the CSI-driver or has an invalid value.                                                                                       | Caller MUST fix the field before retrying.                                                                                                                                                                                           |
+| Operation pending                           | 10 ABORTED         | Indicates that there is already an operation pending for the specified resource. The CSI-driver SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified resource, and then retry with exponential back off.                                                                                                     |
+| Call not implemented                        | 12 UNIMPLEMENTED   | The invoked RPC is not implemented by the CSI-driver or disabled in its current mode of operation.                                                                                                      | Caller MUST NOT retry.                                                                                                                                                                                                               |
+| Not authenticated                           | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                               | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they pass authentication by the CSI-driver for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown                            | 2 UNKNOWN          | Indicates that an unknown error occurred.                                                                                                                                                               | Caller MUST study the logs before retrying.                                                                                                                                                                                          |
 
 ## RPC Interface
 
-* **FenceController Service**: The Controller plugin MUST implement these sets of
+- **FenceController Service**: The Controller plugin MUST implement these sets of
   RPCs.
 
 ```protobuf

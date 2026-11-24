@@ -20,7 +20,7 @@ interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
 
 ## Objective
 
-Define a standard that will enable storage vendors (SP) to develop
+Define a standard that will enable Storage Providers (SP) to develop
 controllers/plugins for managing VolumeGroups. The interface declares the RPCs
 for creating, deleting, modifying, and querying groups of volumes that are
 managed as a single unit; a plugin implements each RPC according to the
@@ -30,19 +30,19 @@ capabilities it advertises (see each RPC's section).
 
 This standard provides
 
-* An API to create and delete volume groups.
-* An API to add volumes to and remove volumes from an existing group.
-* An API to query and list volume groups.
+- An API to create and delete volume groups.
+- An API to add volumes to and remove volumes from an existing group.
+- An API to query and list volume groups.
 
 ### Unsupported Features
 
-* Group snapshots and group replication, which are covered by their own
+- Group snapshots and group replication, which are covered by their own
   specifications.
 
 ## Solution Overview
 
 This specification defines an interface along with the minimum operational and
-packaging recommendations for a storage provider (SP) to implement a VolumeGroup
+packaging recommendations for a Storage Provider (SP) to implement a VolumeGroup
 compatible plugin. The interface declares the RPCs that a plugin implements
 according to the capabilities it advertises (see each RPC's section).
 
@@ -86,14 +86,14 @@ The following error codes are common to all RPCs in this specification. In
 addition to the conditions below, each RPC MAY define further codes in its own
 Errors section.
 
-| Condition | gRPC Code | Description | Recovery Behavior |
-| --------- | --------- | ----------- | ----------------- |
-| Missing required field | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request. | Caller MUST fix the request by adding the missing required field before retrying. |
-| Invalid or unsupported field in the request | 3 INVALID_ARGUMENT | Indicates that one or more fields in the request is either not allowed by the plugin or has an invalid value. | Caller MUST fix the field before retrying. |
-| Operation pending | 10 ABORTED | Indicates that there is already an operation pending for the specified resource. The plugin SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified resource, and then retry with exponential back off. |
-| Call not implemented | 12 UNIMPLEMENTED | The invoked RPC is not implemented by the plugin or disabled in its current mode of operation. | Caller MUST NOT retry. |
-| Not authenticated | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication. | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they pass authentication by the plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown | 2 UNKNOWN | Indicates that an unknown error occurred. | Caller MUST study the logs before retrying. |
+| Condition                                   | gRPC Code          | Description                                                                                                                                                                                         | Recovery Behavior                                                                                                                                                                                                                |
+| ------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Missing required field                      | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request.                                                                                                                                        | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                |
+| Invalid or unsupported field in the request | 3 INVALID_ARGUMENT | Indicates that one or more fields in the request is either not allowed by the plugin or has an invalid value.                                                                                       | Caller MUST fix the field before retrying.                                                                                                                                                                                       |
+| Operation pending                           | 10 ABORTED         | Indicates that there is already an operation pending for the specified resource. The plugin SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified resource, and then retry with exponential back off.                                                                                                 |
+| Call not implemented                        | 12 UNIMPLEMENTED   | The invoked RPC is not implemented by the plugin or disabled in its current mode of operation.                                                                                                      | Caller MUST NOT retry.                                                                                                                                                                                                           |
+| Not authenticated                           | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                           | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they pass authentication by the plugin for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown                            | 2 UNKNOWN          | Indicates that an unknown error occurred.                                                                                                                                                           | Caller MUST study the logs before retrying.                                                                                                                                                                                      |
 
 ## RPC Interface
 
@@ -204,11 +204,11 @@ If the plugin is unable to complete the CreateVolumeGroup call successfully, it 
 gRPC status. If the conditions defined below are encountered, the plugin MUST return the specified gRPC error code. The
 CO MUST implement the specified error recovery behavior when it encounters the gRPC error code.
 
-| Condition                                       | gRPC Code          | Description                                                                                                                                                                                                | Recovery Behavior                                                        |
-| ----------------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Not supported                                   | 3 INVALID_ARGUMENT | Indicates that a new volume group can not be provisioned with the specified parameters because it is not supported. More human-readable information SHOULD be provided in the gRPC `status.message` field. | Caller MUST use different parameters.                                    |
-| Volume group already exists but is incompatible | 6 ALREADY_EXISTS   | Indicates that a volume group corresponding to the specified volume group `name` already exists but is incompatible with the specified `parameters`.                                                       | Caller MUST fix the arguments or use a different `name` before retrying. |
-| Volumes cannot be grouped together | 9 FAILED_PRECONDITION   | Indicates that the volumes cannot be grouped together because the volumes are not configured properly based on requirements from the SP.                                                 | Caller MUST fix the configuration of the volumes so that they meet the requirements for grouping before retrying. |
+| Condition                                       | gRPC Code             | Description                                                                                                                                                                                                | Recovery Behavior                                                                                                 |
+| ----------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Not supported                                   | 3 INVALID_ARGUMENT    | Indicates that a new volume group can not be provisioned with the specified parameters because it is not supported. More human-readable information SHOULD be provided in the gRPC `status.message` field. | Caller MUST use different parameters.                                                                             |
+| Volume group already exists but is incompatible | 6 ALREADY_EXISTS      | Indicates that a volume group corresponding to the specified volume group `name` already exists but is incompatible with the specified `parameters`.                                                       | Caller MUST fix the arguments or use a different `name` before retrying.                                          |
+| Volumes cannot be grouped together              | 9 FAILED_PRECONDITION | Indicates that the volumes cannot be grouped together because the volumes are not configured properly based on requirements from the SP.                                                                   | Caller MUST fix the configuration of the volumes so that they meet the requirements for grouping before retrying. |
 
 ### `DeleteVolumeGroup`
 
@@ -263,8 +263,8 @@ operation MUST be idempotent.
 By adding an existing volume to a group, however, there is no way to pass in parameters to influence placement when
 provisioning a volume.
 
-It is out of the scope of the CSI spec to determine whether a group is consistent or not. It is up to the storage
-provider to clarify that in the vendor specific documentation. This is true either when creating a new volume with a
+It is out of the scope of the CSI spec to determine whether a group is consistent or not. It is up to the Storage
+Provider to clarify that in the vendor specific documentation. This is true either when creating a new volume with a
 group id or adding an existing volume to a group.
 
 CSI drivers supporting MODIFY_VOLUME_GROUP MUST implement ModifyVolumeGroupMembership RPC.
@@ -312,11 +312,11 @@ If the plugin is unable to complete the ModifyVolumeGroupMembership call success
 in the gRPC status. If the conditions defined below are encountered, the plugin MUST return the specified gRPC error
 code. The CO MUST implement the specified error recovery behavior when it encounters the gRPC error code.
 
-| Condition                                            | gRPC Code            | Description                                                                                                                                                                                                                                                                                                                | Recovery Behavior                                                                                                                                    |
-| ---------------------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Condition                                            | gRPC Code            | Description                                                                                                                                                                                                                                                                                                     | Recovery Behavior                                                                                                                                    |
+| ---------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Volumes incompatible or not supported                | 3 INVALID_ARGUMENT   | Besides the general cases, this code MUST also be used to indicate when plugin supporting MODIFY_VOLUME_GROUP cannot modify a volume group because a volume to be added is incompatible with other volumes in the group. More human-readable information SHOULD be provided in the gRPC `status.message` field. | On volumes incompatibility related issues, caller MUST use different volume ids as the input parameter.                                              |
-| Volume id or volume group does not exist             | 5 NOT_FOUND          | Indicates that one of the specified volume ids or the volume group itself does not exist.                                                                                                                                                                                                                                  | Caller MUST verify that the `volume_ids` is correct and the volume group exists, and has not been deleted before retrying with exponential back off. |
-| Unable to add volumes because the maximum is reached | 8 RESOURCE_EXHAUSTED | Indicates that group can not add more volumes because the maximum limit is reached. More human-readable information MAY be provided in the gRPC `status.message` field.                                                                                                                                                    | Caller MUST ensure that whatever is preventing volume group from being modified is addressed before retrying with exponential backoff.               |
+| Volume id or volume group does not exist             | 5 NOT_FOUND          | Indicates that one of the specified volume ids or the volume group itself does not exist.                                                                                                                                                                                                                       | Caller MUST verify that the `volume_ids` is correct and the volume group exists, and has not been deleted before retrying with exponential back off. |
+| Unable to add volumes because the maximum is reached | 8 RESOURCE_EXHAUSTED | Indicates that group can not add more volumes because the maximum limit is reached. More human-readable information MAY be provided in the gRPC `status.message` field.                                                                                                                                         | Caller MUST ensure that whatever is preventing volume group from being modified is addressed before retrying with exponential backoff.               |
 
 ### `ControllerGetVolumeGroup`
 

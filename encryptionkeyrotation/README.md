@@ -17,9 +17,9 @@ interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
 
 ## Objective
 
-Define an extension to the CSI specification that will enable storage vendors
-(SP) to develop controllers/plugins that can rotate the Key Encryption Keys (KEK)
-of existing volumes that are encrypted.
+Define an extension to the CSI specification that will enable Storage Providers
+(SP) to develop controllers/plugins that can rotate the Key Encryption Keys
+(KEK) of existing volumes that are encrypted.
 
 ### Supported Features
 
@@ -37,7 +37,7 @@ This extension defines a procedure that
 ## Solution Overview
 
 This specification defines an interface along with the minimum operational and
-packaging recommendations for a storage provider (SP) to implement a key rotate operation for volumes. The interface declares the RPCs that a plugin
+packaging recommendations for a Storage Provider (SP) to implement a key rotate operation for volumes. The interface declares the RPCs that a plugin
 MUST expose.
 
 ## Architecture
@@ -67,14 +67,14 @@ The following error codes are common to all RPCs in this specification. In
 addition to the conditions below, each RPC MAY define further codes in its own
 Errors section.
 
-| Condition | gRPC Code | Description | Recovery Behavior |
-| --------- | --------- | ----------- | ----------------- |
-| Missing required field | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request. | Caller MUST fix the request by adding the missing required field before retrying. |
-| Invalid or unsupported field in the request | 3 INVALID_ARGUMENT | Indicates that one or more fields in the request is either not allowed by the CSI-driver or has an invalid value. | Caller MUST fix the field before retrying. |
-| Operation pending | 10 ABORTED | Indicates that there is already an operation pending for the specified resource. The CSI-driver SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified resource, and then retry with exponential back off. |
-| Call not implemented | 12 UNIMPLEMENTED | The invoked RPC is not implemented by the CSI-driver or disabled in its current mode of operation. | Caller MUST NOT retry. |
-| Not authenticated | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication. | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they pass authentication by the CSI-driver for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
-| Error is Unknown | 2 UNKNOWN | Indicates that an unknown error occurred. | Caller MUST study the logs before retrying. |
+| Condition                                   | gRPC Code          | Description                                                                                                                                                                                             | Recovery Behavior                                                                                                                                                                                                                    |
+| ------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Missing required field                      | 3 INVALID_ARGUMENT | Indicates that a required field is missing from the request.                                                                                                                                            | Caller MUST fix the request by adding the missing required field before retrying.                                                                                                                                                    |
+| Invalid or unsupported field in the request | 3 INVALID_ARGUMENT | Indicates that one or more fields in the request is either not allowed by the CSI-driver or has an invalid value.                                                                                       | Caller MUST fix the field before retrying.                                                                                                                                                                                           |
+| Operation pending                           | 10 ABORTED         | Indicates that there is already an operation pending for the specified resource. The CSI-driver SHOULD handle this as gracefully as possible, and MAY return this error code to reject secondary calls. | Caller SHOULD ensure that there are no other calls pending for the specified resource, and then retry with exponential back off.                                                                                                     |
+| Call not implemented                        | 12 UNIMPLEMENTED   | The invoked RPC is not implemented by the CSI-driver or disabled in its current mode of operation.                                                                                                      | Caller MUST NOT retry.                                                                                                                                                                                                               |
+| Not authenticated                           | 16 UNAUTHENTICATED | The invoked RPC does not carry secrets that are valid for authentication.                                                                                                                               | Caller SHALL either fix the secrets provided in the RPC, or otherwise regalvanize said secrets such that they pass authentication by the CSI-driver for the attempted RPC, after which point the caller MAY retry the attempted RPC. |
+| Error is Unknown                            | 2 UNKNOWN          | Indicates that an unknown error occurred.                                                                                                                                                               | Caller MUST study the logs before retrying.                                                                                                                                                                                          |
 
 ## RPC Interface
 
@@ -167,6 +167,6 @@ conditions defined below are encountered, the CSI-driver MUST return the
 specified gRPC error code. The caller MUST implement the specified error
 recovery behavior when it encounters the gRPC error code.
 
-| Condition                    | gRPC Code          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Recovery Behavior                                                                                                                                                                                                                     |
-| ---------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Volume does not exist        | 5 NOT_FOUND        | Indicates that a volume corresponding to the specified `volume_id` does not exist.                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Caller MUST verify that the `volume_id` is correct and that the volume is accessible and has not been deleted before retrying with exponential back off.                                                                              |
+| Condition             | gRPC Code   | Description                                                                        | Recovery Behavior                                                                                                                                        |
+| --------------------- | ----------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Volume does not exist | 5 NOT_FOUND | Indicates that a volume corresponding to the specified `volume_id` does not exist. | Caller MUST verify that the `volume_id` is correct and that the volume is accessible and has not been deleted before retrying with exponential back off. |
