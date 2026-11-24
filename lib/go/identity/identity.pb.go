@@ -232,7 +232,7 @@ const (
 	// GET_REPLICATION_DESTINATION_INFO indicates that the CSI-driver
 	// supports getting the destination volume or volume group details
 	// for a replication relationship. This capability is relevant for
-	// storage providers where source and destination volume or volume
+	// Storage Providers where source and destination volume or volume
 	// group identifiers differ.
 	Capability_VolumeReplication_GET_REPLICATION_DESTINATION_INFO Capability_VolumeReplication_Type = 2
 )

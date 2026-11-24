@@ -17,7 +17,7 @@ interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
 
 ## Objective
 
-Define an extension to the CSI Specification that will enable storage vendors
+Define an extension to the CSI Specification that will enable Storage Providers
 (SP) to develop controllers/plugins that can free unused storage allocations
 from existing volumes.
 
@@ -37,7 +37,7 @@ The new extension will define a procedure that
 ## Solution Overview
 
 This specification defines an interface along with the minimum operational and
-packaging recommendations for a storage provider (SP) to implement a space
+packaging recommendations for a Storage Provider (SP) to implement a space
 reclaim operation for volumes. The interface declares the RPCs that a plugin
 MUST expose.
 
